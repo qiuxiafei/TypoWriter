@@ -3,7 +3,7 @@ import Foundation
 // MARK: - 文本处理协议
 
 public protocol TextProcessing {
-    func process(rawText: String, options: ProcessingOptions) async throws -> ProcessedResult
+    func process(rawText: String, customPrompt: String?) async throws -> ProcessedResult
 }
 
 // MARK: - 文本处理器工厂

@@ -3,6 +3,13 @@
 
 import Foundation
 
+/// 处理阶段
+public enum BVIProcessingPhase {
+    case stoppingRecording   // 停止录音
+    case transcribing        // 语音转文字
+    case processing          // 文本优化
+}
+
 /// Better Voice Input 核心处理流程
 public class BVICore {
     private let config: Config
@@ -22,17 +29,29 @@ public class BVICore {
         try await audioRecorder.startRecording()
     }
 
-    /// 停止录音并处理
-    public func stopAndProcess() async throws -> FullProcessingResult {
+    /// 停止录音并处理（带进度回调）
+    /// - Parameter onPhaseChange: 阶段变化回调
+    /// - Returns: 完整处理结果
+    public func stopAndProcess(
+        onPhaseChange: ((BVIProcessingPhase) -> Void)? = nil
+    ) async throws -> FullProcessingResult {
         // 1. 停止录音，获取音频数据
+        onPhaseChange?(.stoppingRecording)
         let audioData = try await audioRecorder.stopRecording()
 
         // 2. 语音识别
+        onPhaseChange?(.transcribing)
         let transcription = try await speechRecognizer.transcribe(audio: audioData)
 
+        // 记录语音识别结果
+        DebugLogger.shared.logTranscription(transcription.text)
+
         // 3. 文本处理
-        let options = ProcessingOptions(preserveStyle: config.processing.preserveStyle)
-        let result = try await textProcessor.process(rawText: transcription.text, options: options)
+        onPhaseChange?(.processing)
+        let result = try await textProcessor.process(rawText: transcription.text, customPrompt: config.processing.prompt)
+
+        // 记录文本处理输出
+        DebugLogger.shared.logTextProcessingOutput(result.text)
 
         return FullProcessingResult(
             transcription: transcription.text,

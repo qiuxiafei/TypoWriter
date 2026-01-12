@@ -2,34 +2,30 @@
 # 将此文件复制到 ~/.config/bvi/config.yaml 并填入你的 API Key
 
 speech_recognition:
-  provider: aliyun  # 语音识别服务商：aliyun | openai | apple
+  provider: aliyun
   aliyun:
-    api_key: ${DASHSCOPE_API_KEY}  # 阿里云百炼 API Key
-    model: qwen3-asr-flash         # 通义千问语音识别模型
+    api_key: <填入你的API Key>
+    model: qwen3-asr-flash
 
 text_processing:
-  # OpenAI 兼容格式，支持任意兼容服务
-  # 以下是各服务商的配置示例：
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  api_key: <填入你的API Key>
+  model: qwen-plus
 
-  # OpenAI
-  base_url: https://api.openai.com/v1
-  api_key: ${OPENAI_API_KEY}
-  model: gpt-4o
+# 以下是高级功能：
+# 当输出文本不满足您的期望时，反注释以下配置项，可以通过调整提词优化文本处理的输出。
 
-  # # Claude (通过兼容接口)
-  # base_url: https://api.anthropic.com/v1
-  # api_key: ${ANTHROPIC_API_KEY}
-  # model: claude-sonnet-4-20250514
-
-  # # DeepSeek
-  # base_url: https://api.deepseek.com/v1
-  # api_key: ${DEEPSEEK_API_KEY}
-  # model: deepseek-chat
-
-  # # Ollama (本地)
-  # base_url: http://localhost:11434/v1
-  # api_key: ollama
-  # model: qwen2.5:14b
-
-processing:
-  preserve_style: true  # 保留用户语言风格
+# processing:
+#   prompt: |
+#     你是一个专业的打字员，任务是将口述内容整理成书面文字。规则如下：
+#     1. 去除口语化表达（"嗯"、"那个"、"就是说"、"然后"等语气词和填充词）
+#     2. 识别并合并修改意图：如果说话人在句中纠正了前面说的内容（如"明天...不对，是后天"），只输出正确的版本（"后天"）
+#     3. 保持原有的语义和说话风格
+#     4. 智能判断是否需要结构化：
+#        - 如果内容包含并列要点（第一、第二...或首先、其次...），自动整理为编号列表
+#        - 如果内容较长，自动进行合理分段
+#        - 如果是简短内容，保持简洁不过度处理
+#     5. 可以修正明显的口误和语法错误，**不要用近义词替换原本的词语**
+#     6. 不要添加原文没有的信息
+#     7. 不要输出任何解释或。说明，只输出整理后的文字
+#     8. 当输入夹杂不同语言时，不要改变每个字、词、单词的语言，不要翻译到同一种语言。

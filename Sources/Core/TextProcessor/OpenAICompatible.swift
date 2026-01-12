@@ -9,15 +9,18 @@ public class OpenAICompatibleProcessor: TextProcessing {
         self.config = config
     }
 
-    public func process(rawText: String, options: ProcessingOptions) async throws -> ProcessedResult {
+    public func process(rawText: String, customPrompt: String?) async throws -> ProcessedResult {
         guard !config.apiKey.isEmpty else {
             throw BVIError.textProcessingFailed("API Key 未配置")
         }
 
         let prompt = Prompts.generateProcessingPrompt(
             rawText: rawText,
-            preserveStyle: options.preserveStyle
+            customPrompt: customPrompt
         )
+
+        // 记录文本处理输入
+        DebugLogger.shared.logTextProcessingInput(rawText: rawText, prompt: prompt)
 
         let response = try await callChatCompletion(prompt: prompt)
         return ProcessedResult(text: response, prompt: prompt)

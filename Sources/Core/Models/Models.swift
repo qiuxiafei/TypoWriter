@@ -52,16 +52,6 @@ public struct FullProcessingResult {
     }
 }
 
-// MARK: - 处理选项
-
-public struct ProcessingOptions {
-    public var preserveStyle: Bool
-
-    public init(preserveStyle: Bool = true) {
-        self.preserveStyle = preserveStyle
-    }
-}
-
 // MARK: - 错误类型
 
 public enum BVIError: Error, LocalizedError {

@@ -82,14 +82,10 @@ public struct TextProcessingConfig: Codable {
 }
 
 public struct ProcessingConfig: Codable {
-    public var preserveStyle: Bool
+    public var prompt: String?
 
-    public init(preserveStyle: Bool = true) {
-        self.preserveStyle = preserveStyle
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case preserveStyle = "preserve_style"
+    public init(prompt: String? = nil) {
+        self.prompt = prompt
     }
 }
 
@@ -186,8 +182,14 @@ public class ConfigLoader {
           api_key: ${OPENAI_API_KEY}
           model: gpt-4o
 
-        processing:
-          preserve_style: true
+        # 可选：自定义文本处理 prompt
+        # processing:
+        #   prompt: |
+        #     你是一个专业的打字员，任务是将口述内容整理成书面文字。
+        #     规则：
+        #     1. 去除口语化表达
+        #     2. 识别并合并修改意图
+        #     3. 保持原有的语义和说话风格
         """
 
         let directory = (path as NSString).deletingLastPathComponent
