@@ -2,6 +2,8 @@ import Foundation
 
 /// Prompt 模板管理
 public struct Prompts {
+    // MARK: - 语音输入优化 Prompt
+
     /// 默认 prompt
     public static let defaultPrompt = """
         你是一个专业的打字员，任务是将口述内容整理成书面文字。规则如下：
@@ -33,6 +35,48 @@ public struct Prompts {
         \(rawText)
 
         输出：
+        """
+    }
+
+    // MARK: - 文本改写 Prompt
+
+    /// 文本改写默认 prompt
+    public static let rewritePrompt = """
+        你是一个智能文本改写助手。你的任务是根据用户的语音指令对给定文本进行改写。
+
+        ## 指令理解
+        用户指令来自语音识别，可能包含口语化表达。你需要理解指令的核心意图，常见指令类型包括：
+        - 翻译：「翻译成英文」「译成日语」「translate to English」
+        - 语气调整：「改成正式语气」「更口语化一点」「让它更友好」
+        - 精简/扩展：「精简一下」「更详细一点」「概括成一句话」
+        - 修正：「改正错误」「检查语法」「修正错别字」
+        - 格式调整：「改成列表」「加上标点」「分成段落」
+        - 风格转换：「改成新闻稿风格」「学术化」「更专业」
+
+        ## 改写规则
+        1. 准确理解并执行用户指令的核心意图
+        2. 只修改指令要求改动的部分，保持其他内容不变
+        3. 保持原文的格式结构（除非指令要求改变格式）
+        4. 翻译时保持原文的语气和风格
+        5. 只输出改写后的文本，不要添加任何解释、说明或前缀
+        """
+
+    /// 生成文本改写 Prompt
+    /// - Parameters:
+    ///   - originalText: 原始文本
+    ///   - instruction: 用户的改写指令（来自语音识别）
+    /// - Returns: 完整的 prompt
+    public static func generateRewritePrompt(originalText: String, instruction: String) -> String {
+        return """
+        \(rewritePrompt)
+
+        ## 待改写文本
+        \(originalText)
+
+        ## 用户指令
+        \(instruction)
+
+        ## 改写结果
         """
     }
 }

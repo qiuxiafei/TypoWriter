@@ -139,6 +139,27 @@ class ErrorPresenter {
                 .warning
             )
 
+        case .rewriteFailed(let message):
+            if message.contains("API") || message.contains("key") || message.contains("Key") || message.contains("401") {
+                return (
+                    "文本改写 API 错误",
+                    "\(contextPrefix)\(message)\n\n请检查文本处理 API Key 是否正确配置。",
+                    .error
+                )
+            }
+            return (
+                "文本改写失败",
+                "\(contextPrefix)\(message)",
+                .warning
+            )
+
+        case .noTextSelected:
+            return (
+                "没有选中文本",
+                "\(contextPrefix)请先选中要改写的文本，再使用语音改写功能。",
+                .info
+            )
+
         case .networkError(let message):
             return (
                 "网络错误",

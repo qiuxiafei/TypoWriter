@@ -8,6 +8,7 @@ public enum BVIProcessingPhase {
     case stoppingRecording   // 停止录音
     case transcribing        // 语音转文字
     case processing          // 文本优化
+    case rewriting           // 文本改写
 }
 
 /// Better Voice Input 核心处理流程
@@ -57,6 +58,44 @@ public class BVICore {
             transcription: transcription.text,
             llmPrompt: result.prompt ?? "",
             processedText: result.text
+        )
+    }
+
+    /// 停止录音并执行文本改写
+    /// - Parameters:
+    ///   - originalText: 待改写的原始文本
+    ///   - onPhaseChange: 阶段变化回调
+    /// - Returns: 完整改写结果
+    public func stopAndRewrite(
+        originalText: String,
+        onPhaseChange: ((BVIProcessingPhase) -> Void)? = nil
+    ) async throws -> FullRewriteResult {
+        // 1. 停止录音，获取音频数据
+        onPhaseChange?(.stoppingRecording)
+        let audioData = try await audioRecorder.stopRecording()
+
+        // 2. 语音识别（将用户指令转为文本）
+        onPhaseChange?(.transcribing)
+        let transcription = try await speechRecognizer.transcribe(audio: audioData)
+
+        // 记录语音识别结果
+        DebugLogger.shared.logTranscription(transcription.text)
+
+        // 3. 执行文本改写
+        onPhaseChange?(.rewriting)
+        let result = try await textProcessor.rewrite(
+            originalText: originalText,
+            instruction: transcription.text
+        )
+
+        // 记录改写输出
+        DebugLogger.shared.logRewriteOutput(result.text)
+
+        return FullRewriteResult(
+            originalText: originalText,
+            instruction: transcription.text,
+            llmPrompt: result.prompt ?? "",
+            rewrittenText: result.text
         )
     }
 

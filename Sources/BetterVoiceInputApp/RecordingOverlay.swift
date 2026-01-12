@@ -6,12 +6,14 @@ enum ProcessingState {
     case recording       // 正在录音
     case transcribing    // 正在语音转文字
     case processing      // 正在优化文字
+    case rewriting       // 正在改写文字
 
     var text: String {
         switch self {
         case .recording: return "正在聆听..."
         case .transcribing: return "语音转文字..."
         case .processing: return "优化文字..."
+        case .rewriting: return "改写文字..."
         }
     }
 
@@ -20,6 +22,7 @@ enum ProcessingState {
         case .recording: return "waveform"
         case .transcribing: return "text.bubble"
         case .processing: return "sparkles"
+        case .rewriting: return "pencil.and.outline"
         }
     }
 
@@ -28,6 +31,7 @@ enum ProcessingState {
         case .recording: return .red
         case .transcribing: return .blue
         case .processing: return .purple
+        case .rewriting: return .orange
         }
     }
 }
@@ -109,7 +113,7 @@ struct RecordingOverlayView: View {
                 Image(systemName: viewModel.state.icon)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(viewModel.state.color)
-                    .rotationEffect(.degrees(viewModel.state == .processing ? rotation : 0))
+                    .rotationEffect(.degrees(viewModel.state == .processing || viewModel.state == .rewriting ? rotation : 0))
             }
             .scaleEffect(isPulsing ? 1.1 : 1.0)
 
@@ -142,8 +146,8 @@ struct RecordingOverlayView: View {
             isPulsing = true
         }
 
-        // 处理状态下的旋转动画
-        if viewModel.state == .processing {
+        // 处理/改写状态下的旋转动画
+        if viewModel.state == .processing || viewModel.state == .rewriting {
             withAnimation(Animation.linear(duration: 2).repeatForever(autoreverses: false)) {
                 rotation = 360
             }

@@ -65,6 +65,35 @@ public class DebugLogger {
             """)
     }
 
+    /// 记录文本改写输入
+    public func logRewriteInput(originalText: String, instruction: String, prompt: String) {
+        guard isEnabled else { return }
+        log("""
+            ═══════════════════════════════════════════════════════════════
+            [文本改写输入]
+            ───────────────────────────────────────────────────────────────
+            原始文本:
+            \(originalText)
+            ───────────────────────────────────────────────────────────────
+            改写指令:
+            \(instruction)
+            ───────────────────────────────────────────────────────────────
+            完整 Prompt:
+            \(prompt)
+            """)
+    }
+
+    /// 记录文本改写输出
+    public func logRewriteOutput(_ text: String) {
+        guard isEnabled else { return }
+        log("""
+            ───────────────────────────────────────────────────────────────
+            [文本改写输出]
+            \(text)
+            ═══════════════════════════════════════════════════════════════
+            """)
+    }
+
     /// 记录错误
     public func logError(_ error: Error, context: String) {
         guard isEnabled else { return }
@@ -72,6 +101,56 @@ public class DebugLogger {
             ⚠️ [错误] \(context)
             \(error.localizedDescription)
             """)
+    }
+
+    /// 记录文本选择检查（用于调试 Accessibility API）
+    public func logSelectionCheck(
+        appName: String,
+        focusResult: Int32?,
+        textResult: Int32?,
+        selectedText: String?,
+        note: String?
+    ) {
+        guard isEnabled else { return }
+
+        let focusResultStr = focusResult.map { axErrorDescription($0) } ?? "N/A"
+        let textResultStr = textResult.map { axErrorDescription($0) } ?? "N/A"
+        let textPreview = selectedText.map { text in
+            text.count > 50 ? String(text.prefix(50)) + "..." : text
+        } ?? "nil"
+
+        log("""
+            ───────────────────────────────────────────────────────────────
+            [文本选择检查]
+            应用: \(appName)
+            焦点元素获取: \(focusResultStr)
+            选中文本获取: \(textResultStr)
+            选中文本: \(textPreview)
+            备注: \(note ?? "无")
+            """)
+    }
+
+    /// AXError 错误码描述
+    private func axErrorDescription(_ error: Int32) -> String {
+        switch error {
+        case 0: return "success (0)"
+        case -25200: return "failure (-25200)"
+        case -25201: return "illegalArgument (-25201)"
+        case -25202: return "invalidUIElement (-25202)"
+        case -25203: return "invalidUIElementObserver (-25203)"
+        case -25204: return "cannotComplete (-25204)"
+        case -25205: return "attributeUnsupported (-25205)"
+        case -25206: return "actionUnsupported (-25206)"
+        case -25207: return "notificationUnsupported (-25207)"
+        case -25208: return "notImplemented (-25208)"
+        case -25209: return "notificationAlreadyRegistered (-25209)"
+        case -25210: return "notificationNotRegistered (-25210)"
+        case -25211: return "apiDisabled (-25211)"
+        case -25212: return "noValue (-25212)"
+        case -25213: return "parameterizedAttributeUnsupported (-25213)"
+        case -25214: return "notEnoughPrecision (-25214)"
+        default: return "unknown (\(error))"
+        }
     }
 
     // MARK: - 私有方法

@@ -52,6 +52,22 @@ public struct FullProcessingResult {
     }
 }
 
+// MARK: - 文本改写结果
+
+public struct FullRewriteResult {
+    public let originalText: String       // 原始文本
+    public let instruction: String        // 用户指令（语音转文本）
+    public let llmPrompt: String          // LLM 输入 prompt
+    public let rewrittenText: String      // 改写后的文本
+
+    public init(originalText: String, instruction: String, llmPrompt: String, rewrittenText: String) {
+        self.originalText = originalText
+        self.instruction = instruction
+        self.llmPrompt = llmPrompt
+        self.rewrittenText = rewrittenText
+    }
+}
+
 // MARK: - 错误类型
 
 public enum BVIError: Error, LocalizedError {
@@ -60,6 +76,8 @@ public enum BVIError: Error, LocalizedError {
     case audioRecordingFailed(String)
     case speechRecognitionFailed(String)
     case textProcessingFailed(String)
+    case rewriteFailed(String)
+    case noTextSelected
     case networkError(String)
     case invalidResponse(String)
 
@@ -75,6 +93,10 @@ public enum BVIError: Error, LocalizedError {
             return "语音识别失败: \(message)"
         case .textProcessingFailed(let message):
             return "文本处理失败: \(message)"
+        case .rewriteFailed(let message):
+            return "文本改写失败: \(message)"
+        case .noTextSelected:
+            return "没有选中文本"
         case .networkError(let message):
             return "网络错误: \(message)"
         case .invalidResponse(let message):

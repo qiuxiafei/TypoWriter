@@ -26,6 +26,23 @@ public class OpenAICompatibleProcessor: TextProcessing {
         return ProcessedResult(text: response, prompt: prompt)
     }
 
+    public func rewrite(originalText: String, instruction: String) async throws -> ProcessedResult {
+        guard !config.apiKey.isEmpty else {
+            throw BVIError.rewriteFailed("API Key 未配置")
+        }
+
+        let prompt = Prompts.generateRewritePrompt(
+            originalText: originalText,
+            instruction: instruction
+        )
+
+        // 记录文本改写输入
+        DebugLogger.shared.logRewriteInput(originalText: originalText, instruction: instruction, prompt: prompt)
+
+        let response = try await callChatCompletion(prompt: prompt)
+        return ProcessedResult(text: response, prompt: prompt)
+    }
+
     private func callChatCompletion(prompt: String) async throws -> String {
         // 构建 URL
         let baseUrl = config.baseUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
