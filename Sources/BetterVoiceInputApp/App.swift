@@ -1,23 +1,16 @@
-import SwiftUI
+import AppKit
 import Core
 
 @main
-struct BetterVoiceInputApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-
-    var body: some Scene {
-        Settings {
-            EmptyView()
-        }
-    }
-}
-
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarController: MenuBarController?
     private var hotkeyManager: HotkeyManager?
     private var recordingOverlay: RecordingOverlay?
     private var bviCore: BVICore?
     private var recordingStartTime: Date?
+
+    /// 待改写的文本（如果为 nil，则为普通语音输入模式）
+    private var pendingRewriteText: String?
 
     private let minimumRecordingDuration: TimeInterval = 0.5
 
@@ -168,6 +161,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startRecording() {
         guard let core = bviCore, !core.isRecording else { return }
 
+        // 检测是否有选中文本
+        let selectedText = TextSelectionHelper.shared.getSelectedText()
+
+        if let text = selectedText, !text.isEmpty {
+            // 有选中文本，进入改写模式
+            pendingRewriteText = text
+        } else {
+            // 未检测到选中文本，继续普通语音输入模式
+            pendingRewriteText = nil
+        }
+
         recordingStartTime = Date()
 
         Task {
@@ -181,11 +185,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             } catch let error as BVIError {
                 await MainActor.run {
+                    pendingRewriteText = nil
                     SoundPlayer.shared.playErrorSound()
                     ErrorPresenter.shared.showBVIError(error, context: "开始录音")
                 }
             } catch {
                 await MainActor.run {
+                    pendingRewriteText = nil
                     SoundPlayer.shared.playErrorSound()
                     ErrorPresenter.shared.showToast("录音启动失败", severity: .error)
                 }
@@ -201,6 +207,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 播放停止音效
         SoundPlayer.shared.playStopSound()
 
+        // 根据是否有待改写文本决定处理方式
+        if let textToRewrite = pendingRewriteText {
+            stopAndRewrite(core: core, originalText: textToRewrite, duration: duration)
+        } else {
+            stopAndProcess(core: core, duration: duration)
+        }
+    }
+
+    /// 普通语音输入处理
+    private func stopAndProcess(core: BVICore, duration: TimeInterval) {
         Task {
             // 检查是否误触
             if duration < minimumRecordingDuration {
@@ -226,6 +242,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                             overlay?.updateState(.transcribing)
                         case .processing:
                             overlay?.updateState(.processing)
+                        case .rewriting:
+                            // 不会出现在普通模式
+                            break
                         }
                     }
                 }
@@ -253,6 +272,70 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     SoundPlayer.shared.playErrorSound()
                     ErrorPresenter.shared.showToast(
                         "处理失败: \(error.localizedDescription)",
+                        severity: .error
+                    )
+                }
+            }
+        }
+    }
+
+    /// 文本改写处理
+    private func stopAndRewrite(core: BVICore, originalText: String, duration: TimeInterval) {
+        Task {
+            // 检查是否误触
+            if duration < minimumRecordingDuration {
+                await MainActor.run {
+                    recordingOverlay?.hide()
+                    ErrorPresenter.shared.showToast("录音太短，已取消", severity: .info)
+                }
+                // 取消录音但不处理
+                _ = try? await core.stopAndProcess()
+                return
+            }
+
+            // 执行改写处理
+            do {
+                let overlay = await MainActor.run { self.recordingOverlay }
+                let result = try await core.stopAndRewrite(originalText: originalText) { phase in
+                    Task { @MainActor in
+                        switch phase {
+                        case .stoppingRecording:
+                            // 保持录音状态显示
+                            break
+                        case .transcribing:
+                            overlay?.updateState(.transcribing)
+                        case .rewriting:
+                            overlay?.updateState(.rewriting)
+                        case .processing:
+                            // 不会出现在改写模式
+                            break
+                        }
+                    }
+                }
+
+                await MainActor.run {
+                    // 隐藏状态窗口
+                    recordingOverlay?.hide()
+                    // 播放完成音效
+                    SoundPlayer.shared.playCompleteSound()
+                    // 替换选中文本（会自动使用剪贴板 + Cmd+V）
+                    if !TextSelectionHelper.shared.replaceSelectedText(with: result.rewrittenText) {
+                        // 如果无法替换，显示结果窗口
+                        ResultWindow.shared.show(text: result.rewrittenText)
+                    }
+                }
+            } catch let error as BVIError {
+                await MainActor.run {
+                    recordingOverlay?.hide()
+                    SoundPlayer.shared.playErrorSound()
+                    ErrorPresenter.shared.showBVIError(error, context: "文本改写")
+                }
+            } catch {
+                await MainActor.run {
+                    recordingOverlay?.hide()
+                    SoundPlayer.shared.playErrorSound()
+                    ErrorPresenter.shared.showToast(
+                        "改写失败: \(error.localizedDescription)",
                         severity: .error
                     )
                 }
