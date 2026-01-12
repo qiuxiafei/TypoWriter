@@ -7,7 +7,7 @@ public protocol TextProcessing {
     func process(rawText: String, customPrompt: String?) async throws -> ProcessedResult
 
     /// 改写文本（根据用户指令）
-    func rewrite(originalText: String, instruction: String) async throws -> ProcessedResult
+    func rewrite(originalText: String, instruction: String, customPrompt: String?) async throws -> ProcessedResult
 }
 
 // MARK: - 文本处理器工厂

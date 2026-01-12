@@ -83,9 +83,16 @@ public struct TextProcessingConfig: Codable {
 
 public struct ProcessingConfig: Codable {
     public var prompt: String?
+    public var rewritePrompt: String?
 
-    public init(prompt: String? = nil) {
+    public init(prompt: String? = nil, rewritePrompt: String? = nil) {
         self.prompt = prompt
+        self.rewritePrompt = rewritePrompt
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case prompt
+        case rewritePrompt = "rewrite_prompt"
     }
 }
 
@@ -165,6 +172,25 @@ public class ConfigLoader {
         // 可以在这里添加配置验证逻辑
     }
 
+    /// 保存配置文件
+    public func save(_ config: Config, to path: String? = nil) throws {
+        let configPath = path ?? defaultConfigPath
+        let directory = (configPath as NSString).deletingLastPathComponent
+
+        try FileManager.default.createDirectory(
+            atPath: directory,
+            withIntermediateDirectories: true
+        )
+
+        do {
+            let encoder = YAMLEncoder()
+            let yaml = try encoder.encode(config)
+            try yaml.write(toFile: configPath, atomically: true, encoding: .utf8)
+        } catch {
+            throw BVIError.configParseError("无法保存配置文件: \(error.localizedDescription)")
+        }
+    }
+
     /// 创建示例配置文件
     public func createExampleConfig(at path: String) throws {
         let exampleContent = """
@@ -190,6 +216,9 @@ public class ConfigLoader {
         #     1. 去除口语化表达
         #     2. 识别并合并修改意图
         #     3. 保持原有的语义和说话风格
+        #   rewrite_prompt: |
+        #     你是一个智能文本改写助手。
+        #     规则：根据用户指令改写，保持原文风格。
         """
 
         let directory = (path as NSString).deletingLastPathComponent

@@ -85,7 +85,8 @@ public class BVICore {
         onPhaseChange?(.rewriting)
         let result = try await textProcessor.rewrite(
             originalText: originalText,
-            instruction: transcription.text
+            instruction: transcription.text,
+            customPrompt: config.processing.rewritePrompt
         )
 
         // 记录改写输出

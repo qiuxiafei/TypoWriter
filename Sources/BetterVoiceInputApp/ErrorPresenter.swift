@@ -68,14 +68,17 @@ class ErrorPresenter {
 
     /// 展示 BVIError
     func showBVIError(_ error: BVIError, context: String? = nil) {
-        let (title, message, severity) = analyzeBVIError(error, context: context)
+        DebugLogger.shared.logError(error, context: context ?? "BVIError")
+        let (_, message, severity) = analyzeBVIError(error, context: context)
+        let duration: TimeInterval = severity == .critical ? 6.0 : 4.0
+        showToast(message, severity: severity, duration: duration)
+    }
 
-        switch severity {
-        case .info, .warning:
-            showToast(message, severity: severity, duration: 4.0)
-        case .error, .critical:
-            showAlert(title: title, message: message, severity: severity)
-        }
+    /// 展示通用错误
+    func showError(_ error: Error, context: String) {
+        DebugLogger.shared.logError(error, context: context)
+        let message = "[\(context)] \(error.localizedDescription)"
+        showToast(message, severity: .error, duration: 4.0)
     }
 
     /// 分析 BVIError 并返回适当的展示信息

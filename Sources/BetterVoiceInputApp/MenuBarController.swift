@@ -53,15 +53,10 @@ class MenuBarController {
 
         menu.addItem(NSMenuItem.separator())
 
-        // 打开配置文件
-        let configItem = NSMenuItem(title: "打开配置文件", action: #selector(openConfig(_:)), keyEquivalent: ",")
+        // 配置
+        let configItem = NSMenuItem(title: "配置…", action: #selector(openConfigWindow(_:)), keyEquivalent: ",")
         configItem.target = self
         menu.addItem(configItem)
-
-        // 重新加载配置
-        let reloadItem = NSMenuItem(title: "重新加载配置", action: #selector(reloadConfig(_:)), keyEquivalent: "r")
-        reloadItem.target = self
-        menu.addItem(reloadItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -109,32 +104,8 @@ class MenuBarController {
         NSWorkspace.shared.activateFileViewerSelecting([url])
     }
 
-    @objc private func openConfig(_ sender: NSMenuItem) {
-        ConfigSetupManager.shared.openConfigFile()
-    }
-
-    @objc private func reloadConfig(_ sender: NSMenuItem) {
-        // 提示用户需要重启应用
-        let alert = NSAlert()
-        alert.messageText = "重新加载配置"
-        alert.informativeText = "配置更改需要重新启动应用才能生效。\n\n是否现在重启？"
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "重启")
-        alert.addButton(withTitle: "取消")
-
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            // 重启应用
-            let url = URL(fileURLWithPath: Bundle.main.bundlePath)
-            let configuration = NSWorkspace.OpenConfiguration()
-            configuration.createsNewApplicationInstance = true
-
-            NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, _ in
-                DispatchQueue.main.async {
-                    NSApp.terminate(nil)
-                }
-            }
-        }
+    @objc private func openConfigWindow(_ sender: NSMenuItem) {
+        NotificationCenter.default.post(name: .openConfigWindow, object: nil)
     }
 
     @objc private func quit(_ sender: NSMenuItem) {
@@ -144,4 +115,5 @@ class MenuBarController {
 
 extension Notification.Name {
     static let hotkeyEnabledChanged = Notification.Name("hotkeyEnabledChanged")
+    static let openConfigWindow = Notification.Name("openConfigWindow")
 }

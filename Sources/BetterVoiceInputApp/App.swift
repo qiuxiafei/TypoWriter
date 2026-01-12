@@ -2,12 +2,23 @@ import AppKit
 import Core
 
 @main
+struct BetterVoiceInputApp {
+    private static let appDelegate = AppDelegate()
+
+    static func main() {
+        let app = NSApplication.shared
+        app.delegate = appDelegate
+        app.run()
+    }
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarController: MenuBarController?
     private var hotkeyManager: HotkeyManager?
     private var recordingOverlay: RecordingOverlay?
     private var bviCore: BVICore?
     private var recordingStartTime: Date?
+    private var configWindowController: ConfigWindowController?
 
     /// 待改写的文本（如果为 nil，则为普通语音输入模式）
     private var pendingRewriteText: String?
@@ -15,6 +26,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let minimumRecordingDuration: TimeInterval = 0.5
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        configWindowController = ConfigWindowController()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(openConfigWindow),
+            name: .openConfigWindow,
+            object: nil
+        )
         // 隐藏 Dock 图标
         NSApp.setActivationPolicy(.accessory)
 
@@ -59,7 +77,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func initializeApp(with config: Config) {
-        bviCore = BVICore(config: config)
+        applyConfig(config, showToast: false)
 
         // 初始化 MenuBar
         menuBarController = MenuBarController()
@@ -76,6 +94,49 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.stopRecording()
         }
         hotkeyManager?.startListening()
+    }
+
+    private func applyConfig(_ config: Config, showToast: Bool = true) {
+        bviCore = BVICore(config: config)
+        if showToast {
+            ErrorPresenter.shared.showToast("配置已更新", severity: .info)
+        }
+    }
+
+    @objc private func openConfigWindow() {
+        showConfigWindow()
+    }
+
+    private func showConfigWindow() {
+        guard let configWindowController = configWindowController else {
+            return
+        }
+
+        let result = ConfigSetupManager.shared.checkAndPrepareConfig()
+
+        switch result {
+        case .ready(let config):
+            configWindowController.show(with: config) { [weak self] updatedConfig in
+                self?.applyConfig(updatedConfig)
+            }
+        case .created, .needsApiKey:
+            do {
+                let config = try ConfigLoader.shared.load()
+                configWindowController.show(with: config) { [weak self] updatedConfig in
+                    self?.applyConfig(updatedConfig)
+                }
+            } catch let error as BVIError {
+                ErrorPresenter.shared.showBVIError(error, context: "配置")
+            } catch {
+                ErrorPresenter.shared.showError(error, context: "配置")
+            }
+        case .error(let error):
+            if let bviError = error as? BVIError {
+                ErrorPresenter.shared.showBVIError(bviError, context: "配置")
+            } else {
+                ErrorPresenter.shared.showError(error, context: "配置")
+            }
+        }
     }
 
     // MARK: - 首次设置提示
@@ -146,10 +207,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             alert.addButton(withTitle: "打开配置文件")
             alert.addButton(withTitle: "关闭")
 
-            let response = alert.runModal()
-            if response == .alertFirstButtonReturn {
-                ConfigSetupManager.shared.openConfigFile()
-            }
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            showConfigWindow()
+        }
+
+
         } else {
             alert.addButton(withTitle: "确定")
             alert.runModal()
@@ -189,13 +252,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     SoundPlayer.shared.playErrorSound()
                     ErrorPresenter.shared.showBVIError(error, context: "开始录音")
                 }
-            } catch {
-                await MainActor.run {
-                    pendingRewriteText = nil
-                    SoundPlayer.shared.playErrorSound()
-                    ErrorPresenter.shared.showToast("录音启动失败", severity: .error)
+                } catch {
+                    await MainActor.run {
+                        pendingRewriteText = nil
+                        SoundPlayer.shared.playErrorSound()
+                        ErrorPresenter.shared.showError(error, context: "开始录音")
+                    }
                 }
-            }
+
         }
     }
 
@@ -270,10 +334,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 await MainActor.run {
                     recordingOverlay?.hide()
                     SoundPlayer.shared.playErrorSound()
-                    ErrorPresenter.shared.showToast(
-                        "处理失败: \(error.localizedDescription)",
-                        severity: .error
-                    )
+                    ErrorPresenter.shared.showError(error, context: "语音处理")
                 }
             }
         }
@@ -334,10 +395,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 await MainActor.run {
                     recordingOverlay?.hide()
                     SoundPlayer.shared.playErrorSound()
-                    ErrorPresenter.shared.showToast(
-                        "改写失败: \(error.localizedDescription)",
-                        severity: .error
-                    )
+                    ErrorPresenter.shared.showError(error, context: "文本改写")
                 }
             }
         }
