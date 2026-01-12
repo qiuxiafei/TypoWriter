@@ -1,0 +1,262 @@
+import SwiftUI
+import Core
+
+@main
+struct BetterVoiceInputApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+    var body: some Scene {
+        Settings {
+            EmptyView()
+        }
+    }
+}
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    private var menuBarController: MenuBarController?
+    private var hotkeyManager: HotkeyManager?
+    private var recordingOverlay: RecordingOverlay?
+    private var bviCore: BVICore?
+    private var recordingStartTime: Date?
+
+    private let minimumRecordingDuration: TimeInterval = 0.5
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // 隐藏 Dock 图标
+        NSApp.setActivationPolicy(.accessory)
+
+        // 关闭 SwiftUI 自动创建的设置窗口（纯菜单栏应用不需要）
+        DispatchQueue.main.async {
+            for window in NSApp.windows {
+                // 只关闭 Settings 窗口（标题包含 "Settings"）
+                if window.title.contains("Settings") {
+                    window.close()
+                }
+            }
+        }
+
+        // 检查并准备配置
+        let result = ConfigSetupManager.shared.checkAndPrepareConfig()
+
+        switch result {
+        case .ready(let config):
+            // 配置就绪，初始化应用
+            initializeApp(with: config)
+
+        case .created:
+            // 已创建默认配置，提示用户配置
+            showFirstTimeSetupAlert()
+            // 仍然初始化菜单栏，让用户可以访问设置
+            menuBarController = MenuBarController()
+
+        case .needsApiKey:
+            // 需要配置 API Key
+            showApiKeyRequiredAlert()
+            menuBarController = MenuBarController()
+
+        case .error(let error):
+            // 发生错误
+            showErrorAlert(
+                title: "配置错误",
+                message: error.localizedDescription,
+                showOpenConfig: true
+            )
+            menuBarController = MenuBarController()
+        }
+    }
+
+    private func initializeApp(with config: Config) {
+        bviCore = BVICore(config: config)
+
+        // 初始化 MenuBar
+        menuBarController = MenuBarController()
+
+        // 初始化录音状态 Widget
+        recordingOverlay = RecordingOverlay()
+
+        // 初始化按键监听
+        hotkeyManager = HotkeyManager()
+        hotkeyManager?.onKeyDown = { [weak self] in
+            self?.startRecording()
+        }
+        hotkeyManager?.onKeyUp = { [weak self] in
+            self?.stopRecording()
+        }
+        hotkeyManager?.startListening()
+    }
+
+    // MARK: - 首次设置提示
+
+    private func showFirstTimeSetupAlert() {
+        // 将应用激活到前台，否则 Alert 会在后台弹出用户看不到
+        NSApp.activate(ignoringOtherApps: true)
+
+        let alert = NSAlert()
+        alert.messageText = "欢迎使用 Better Voice Input"
+        alert.informativeText = """
+        已为您创建默认配置文件。
+
+        请编辑配置文件，填入您的 API Key 后重新启动应用。
+
+        配置文件位置：
+        ~/.config/bvi/config.yaml
+        """
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "打开配置文件")
+        alert.addButton(withTitle: "稍后配置")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            ConfigSetupManager.shared.openConfigFile()
+        }
+    }
+
+    // MARK: - API Key 未配置提示
+
+    private func showApiKeyRequiredAlert() {
+        // 将应用激活到前台
+        NSApp.activate(ignoringOtherApps: true)
+
+        let alert = NSAlert()
+        alert.messageText = "需要配置 API Key"
+        alert.informativeText = """
+        检测到配置文件中的 API Key 尚未设置。
+
+        请编辑配置文件，填入有效的 API Key：
+        1. speech_recognition.aliyun.api_key - 语音识别 API Key
+        2. text_processing.api_key - 文本处理 API Key
+
+        配置完成后请重新启动应用。
+        """
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "打开配置文件")
+        alert.addButton(withTitle: "稍后配置")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            ConfigSetupManager.shared.openConfigFile()
+        }
+    }
+
+    // MARK: - 错误提示
+
+    private func showErrorAlert(title: String, message: String, showOpenConfig: Bool = false) {
+        // 将应用激活到前台
+        NSApp.activate(ignoringOtherApps: true)
+
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .critical
+
+        if showOpenConfig {
+            alert.addButton(withTitle: "打开配置文件")
+            alert.addButton(withTitle: "关闭")
+
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                ConfigSetupManager.shared.openConfigFile()
+            }
+        } else {
+            alert.addButton(withTitle: "确定")
+            alert.runModal()
+        }
+    }
+
+    // MARK: - 录音控制
+
+    private func startRecording() {
+        guard let core = bviCore, !core.isRecording else { return }
+
+        recordingStartTime = Date()
+
+        Task {
+            do {
+                try await core.startRecording()
+                await MainActor.run {
+                    // 播放开始音效
+                    SoundPlayer.shared.playStartSound()
+                    // 显示录音状态
+                    recordingOverlay?.show(state: .recording)
+                }
+            } catch let error as BVIError {
+                await MainActor.run {
+                    SoundPlayer.shared.playErrorSound()
+                    ErrorPresenter.shared.showBVIError(error, context: "开始录音")
+                }
+            } catch {
+                await MainActor.run {
+                    SoundPlayer.shared.playErrorSound()
+                    ErrorPresenter.shared.showToast("录音启动失败", severity: .error)
+                }
+            }
+        }
+    }
+
+    private func stopRecording() {
+        guard let core = bviCore, core.isRecording else { return }
+
+        let duration = Date().timeIntervalSince(recordingStartTime ?? Date())
+
+        // 播放停止音效
+        SoundPlayer.shared.playStopSound()
+
+        Task {
+            // 检查是否误触
+            if duration < minimumRecordingDuration {
+                await MainActor.run {
+                    recordingOverlay?.hide()
+                    ErrorPresenter.shared.showToast("录音太短，已取消", severity: .info)
+                }
+                // 取消录音但不处理
+                _ = try? await core.stopAndProcess()
+                return
+            }
+
+            // 处理录音（带状态更新）
+            do {
+                let overlay = await MainActor.run { self.recordingOverlay }
+                let result = try await core.stopAndProcess { phase in
+                    Task { @MainActor in
+                        switch phase {
+                        case .stoppingRecording:
+                            // 保持录音状态显示
+                            break
+                        case .transcribing:
+                            overlay?.updateState(.transcribing)
+                        case .processing:
+                            overlay?.updateState(.processing)
+                        }
+                    }
+                }
+
+                await MainActor.run {
+                    // 隐藏状态窗口
+                    recordingOverlay?.hide()
+                    // 播放完成音效
+                    SoundPlayer.shared.playCompleteSound()
+                    // 尝试输入到当前活跃窗口
+                    if !TextInputSimulator.shared.typeText(result.processedText) {
+                        // 如果无法输入，显示结果窗口
+                        ResultWindow.shared.show(text: result.processedText)
+                    }
+                }
+            } catch let error as BVIError {
+                await MainActor.run {
+                    recordingOverlay?.hide()
+                    SoundPlayer.shared.playErrorSound()
+                    ErrorPresenter.shared.showBVIError(error, context: "语音处理")
+                }
+            } catch {
+                await MainActor.run {
+                    recordingOverlay?.hide()
+                    SoundPlayer.shared.playErrorSound()
+                    ErrorPresenter.shared.showToast(
+                        "处理失败: \(error.localizedDescription)",
+                        severity: .error
+                    )
+                }
+            }
+        }
+    }
+}

@@ -8,6 +8,7 @@ let package = Package(
     ],
     products: [
         .executable(name: "bvi", targets: ["BetterVoiceInput"]),
+        .executable(name: "BetterVoiceInputApp", targets: ["BetterVoiceInputApp"]),
         .library(name: "BetterVoiceInputCore", targets: ["Core"])
     ],
     dependencies: [
@@ -21,6 +22,11 @@ let package = Package(
                 "Core",
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ]
+        ),
+        .executableTarget(
+            name: "BetterVoiceInputApp",
+            dependencies: ["Core"],
+            exclude: ["Info.plist", "BetterVoiceInputApp.entitlements"]
         ),
         .target(
             name: "Core",
