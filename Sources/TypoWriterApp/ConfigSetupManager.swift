@@ -12,7 +12,7 @@ class ConfigSetupManager {
     /// 配置目录路径
     var configDirectory: String {
         let homeDir = fileManager.homeDirectoryForCurrentUser.path
-        return "\(homeDir)/.config/bvi"
+        return "\(homeDir)/.config/tw"
     }
 
     /// 配置文件路径
@@ -41,7 +41,7 @@ class ConfigSetupManager {
                     attributes: nil
                 )
             } catch {
-                return .error(BVIError.configParseError("无法创建配置目录: \(error.localizedDescription)"))
+                return .error(TWError.configParseError("无法创建配置目录: \(error.localizedDescription)"))
             }
         }
 
@@ -52,7 +52,7 @@ class ConfigSetupManager {
                 try ConfigLoader.shared.createExampleConfig(at: configPath)
                 return .created
             } catch {
-                return .error(BVIError.configParseError("无法创建配置文件: \(error.localizedDescription)"))
+                return .error(TWError.configParseError("无法创建配置文件: \(error.localizedDescription)"))
             }
         }
 

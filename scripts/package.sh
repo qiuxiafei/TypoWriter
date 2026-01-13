@@ -7,7 +7,7 @@ set -e
 
 # 配置
 APP_NAME="Typo Writer"
-BUNDLE_ID="com.bvi.app"
+BUNDLE_ID="com.tw.app"
 VERSION="1.0.0"
 BUILD_DIR=".build/release"
 APP_DIR="$BUILD_DIR/$APP_NAME.app"
@@ -192,7 +192,7 @@ notarize_app() {
     fi
 
     # 存储凭据（如果尚未存储）
-    xcrun notarytool store-credentials "bvi-notarize" \
+    xcrun notarytool store-credentials "tw-notarize" \
         --apple-id "$APPLE_ID" \
         --password "$APPLE_APP_SPECIFIC_PASSWORD" \
         --team-id "$APPLE_TEAM_ID" \
@@ -200,7 +200,7 @@ notarize_app() {
 
     # 提交公证
     xcrun notarytool submit "$OUTPUT_DIR/$DMG_NAME" \
-        --keychain-profile "bvi-notarize" \
+        --keychain-profile "tw-notarize" \
         --wait
 
     # Staple 公证票据

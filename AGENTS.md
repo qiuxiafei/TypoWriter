@@ -3,7 +3,7 @@
 ## Repository Overview
 - Project: Typo Writer (TW)
 - Language: Swift Package Manager (Swift 5.9)
-- Products: CLI `bvi`, menubar app `TypoWriterApp` (Typo Writer), library `TypoWriterCore`
+- Products: CLI `tw`, menubar app `TypoWriterApp` (Typo Writer), library `TypoWriterCore`
 - Platforms: macOS 13+
 - Core modules live under `Sources/Core`
 - UI/app modules live under `Sources/TypoWriterApp`
@@ -17,7 +17,7 @@
 - Build release: `swift build -c release`
 - Run all tests: `swift test`
 - Run a single test: `swift test --filter CoreTests.testPromptsGeneration`
-- CLI executable output: `.build/debug/bvi`
+- CLI executable output: `.build/debug/tw`
 
 ## Project Layout
 - `Package.swift`: SPM manifest with dependencies
@@ -69,11 +69,11 @@
 - Use descriptive parameter labels
 
 ## Error Handling
-- Use `BVIError` for user-facing errors
+- Use `TWError` for user-facing errors
 - Prefer `guard` with early `throw` for validation
 - Wrap parsing errors with context when needed
-- Surface network failures via `BVIError.networkError`
-- Provide localized descriptions in `BVIError.errorDescription`
+- Surface network failures via `TWError.networkError`
+- Provide localized descriptions in `TWError.errorDescription`
 
 ## Concurrency
 - Async operations use `async/await`
@@ -89,7 +89,7 @@
 - Check HTTP status codes and return friendly errors
 
 ## Configuration
-- YAML config path: `~/.config/bvi/config.yaml`
+- YAML config path: `~/.config/tw/config.yaml`
 - Environment expansion supports `${VAR_NAME}`
 - Validation happens in `ConfigLoader`
 - Provide example config via `createExampleConfig`
@@ -104,7 +104,7 @@
 - App target excludes `Info.plist` and entitlements from compilation
 - Prefer `FileManager` for user path lookups
 - Avoid writing outside the user home directory
-- Keep generated config under `~/.config/bvi`
+- Keep generated config under `~/.config/tw`
 
 ## Testing Guidelines
 - Tests live under `Tests/CoreTests`
@@ -116,7 +116,7 @@
 ## Documentation and Comments
 - Public types should have short doc comments
 - Prefer concise inline comments when necessary
-- Avoid redundant comments for obvious logic
+- Avoid redundant comments for otwous logic
 - Keep Chinese comments if the surrounding file uses them
 
 ## Swift Package Manager Practices

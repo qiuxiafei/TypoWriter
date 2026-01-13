@@ -11,7 +11,7 @@ public class OpenAICompatibleProcessor: TextProcessing {
 
     public func process(rawText: String, customPrompt: String?) async throws -> ProcessedResult {
         guard !config.apiKey.isEmpty else {
-            throw BVIError.textProcessingFailed("API Key 未配置")
+            throw TWError.textProcessingFailed("API Key 未配置")
         }
 
         let prompt = Prompts.generateProcessingPrompt(
@@ -28,7 +28,7 @@ public class OpenAICompatibleProcessor: TextProcessing {
 
     public func rewrite(originalText: String, instruction: String, customPrompt: String?) async throws -> ProcessedResult {
         guard !config.apiKey.isEmpty else {
-            throw BVIError.rewriteFailed("API Key 未配置")
+            throw TWError.rewriteFailed("API Key 未配置")
         }
 
         let prompt = Prompts.generateRewritePrompt(
@@ -48,7 +48,7 @@ public class OpenAICompatibleProcessor: TextProcessing {
         // 构建 URL
         let baseUrl = config.baseUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
         guard let url = URL(string: "\(baseUrl)/chat/completions") else {
-            throw BVIError.textProcessingFailed("无效的 API URL")
+            throw TWError.textProcessingFailed("无效的 API URL")
         }
 
         // 构建请求
@@ -73,19 +73,19 @@ public class OpenAICompatibleProcessor: TextProcessing {
 
         // 检查响应状态
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw BVIError.networkError("无效的响应")
+            throw TWError.networkError("无效的响应")
         }
 
         guard httpResponse.statusCode == 200 else {
             let errorMessage = String(data: data, encoding: .utf8) ?? "未知错误"
-            throw BVIError.textProcessingFailed("API 错误 (\(httpResponse.statusCode)): \(errorMessage)")
+            throw TWError.textProcessingFailed("API 错误 (\(httpResponse.statusCode)): \(errorMessage)")
         }
 
         // 解析响应
         let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
 
         guard let content = chatResponse.choices.first?.message.content else {
-            throw BVIError.invalidResponse("响应中没有内容")
+            throw TWError.invalidResponse("响应中没有内容")
         }
 
         return content.trimmingCharacters(in: .whitespacesAndNewlines)

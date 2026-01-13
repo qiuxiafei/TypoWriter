@@ -16,7 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarController: MenuBarController?
     private var hotkeyManager: HotkeyManager?
     private var recordingOverlay: RecordingOverlay?
-    private var bviCore: BVICore?
+    private var twCore: TWCore?
     private var recordingStartTime: Date?
     private var configWindowController: ConfigWindowController?
 
@@ -97,7 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func applyConfig(_ config: Config, showToast: Bool = true) {
-        bviCore = BVICore(config: config)
+        twCore = TWCore(config: config)
         if showToast {
             ErrorPresenter.shared.showToast("配置已更新", severity: .info)
         }
@@ -125,14 +125,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 configWindowController.show(with: config) { [weak self] updatedConfig in
                     self?.applyConfig(updatedConfig)
                 }
-            } catch let error as BVIError {
-                ErrorPresenter.shared.showBVIError(error, context: "配置")
+            } catch let error as TWError {
+                ErrorPresenter.shared.showTWError(error, context: "配置")
             } catch {
                 ErrorPresenter.shared.showError(error, context: "配置")
             }
         case .error(let error):
-            if let bviError = error as? BVIError {
-                ErrorPresenter.shared.showBVIError(bviError, context: "配置")
+            if let twError = error as? TWError {
+                ErrorPresenter.shared.showTWError(twError, context: "配置")
             } else {
                 ErrorPresenter.shared.showError(error, context: "配置")
             }
@@ -153,7 +153,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         请编辑配置文件，填入您的 API Key 后重新启动应用。
 
         配置文件位置：
-        ~/.config/bvi/config.yaml
+        ~/.config/tw/config.yaml
         """
         alert.alertStyle = .informational
         alert.addButton(withTitle: "打开配置文件")
@@ -222,7 +222,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - 录音控制
 
     private func startRecording() {
-        guard let core = bviCore, !core.isRecording else { return }
+        guard let core = twCore, !core.isRecording else { return }
 
         // 检测是否有选中文本
         let selectedText = TextSelectionHelper.shared.getSelectedText()
@@ -246,11 +246,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     // 显示录音状态
                     recordingOverlay?.show(state: .recording)
                 }
-            } catch let error as BVIError {
+            } catch let error as TWError {
                 await MainActor.run {
                     pendingRewriteText = nil
                     SoundPlayer.shared.playErrorSound()
-                    ErrorPresenter.shared.showBVIError(error, context: "开始录音")
+                    ErrorPresenter.shared.showTWError(error, context: "开始录音")
                 }
                 } catch {
                     await MainActor.run {
@@ -264,7 +264,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func stopRecording() {
-        guard let core = bviCore, core.isRecording else { return }
+        guard let core = twCore, core.isRecording else { return }
 
         let duration = Date().timeIntervalSince(recordingStartTime ?? Date())
 
@@ -280,7 +280,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// 普通语音输入处理
-    private func stopAndProcess(core: BVICore, duration: TimeInterval) {
+    private func stopAndProcess(core: TWCore, duration: TimeInterval) {
         Task {
             // 检查是否误触
             if duration < minimumRecordingDuration {
@@ -324,11 +324,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         ResultWindow.shared.show(text: result.processedText)
                     }
                 }
-            } catch let error as BVIError {
+            } catch let error as TWError {
                 await MainActor.run {
                     recordingOverlay?.hide()
                     SoundPlayer.shared.playErrorSound()
-                    ErrorPresenter.shared.showBVIError(error, context: "语音处理")
+                    ErrorPresenter.shared.showTWError(error, context: "语音处理")
                 }
             } catch {
                 await MainActor.run {
@@ -341,7 +341,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// 文本改写处理
-    private func stopAndRewrite(core: BVICore, originalText: String, duration: TimeInterval) {
+    private func stopAndRewrite(core: TWCore, originalText: String, duration: TimeInterval) {
         Task {
             // 检查是否误触
             if duration < minimumRecordingDuration {
@@ -385,11 +385,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                         ResultWindow.shared.show(text: result.rewrittenText)
                     }
                 }
-            } catch let error as BVIError {
+            } catch let error as TWError {
                 await MainActor.run {
                     recordingOverlay?.hide()
                     SoundPlayer.shared.playErrorSound()
-                    ErrorPresenter.shared.showBVIError(error, context: "文本改写")
+                    ErrorPresenter.shared.showTWError(error, context: "文本改写")
                 }
             } catch {
                 await MainActor.run {

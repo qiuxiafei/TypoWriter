@@ -66,10 +66,10 @@ class ErrorPresenter {
         }
     }
 
-    /// 展示 BVIError
-    func showBVIError(_ error: BVIError, context: String? = nil) {
-        DebugLogger.shared.logError(error, context: context ?? "BVIError")
-        let (_, message, severity) = analyzeBVIError(error, context: context)
+    /// 展示 TWError
+    func showTWError(_ error: TWError, context: String? = nil) {
+        DebugLogger.shared.logError(error, context: context ?? "TWError")
+        let (_, message, severity) = analyzeTWError(error, context: context)
         let duration: TimeInterval = severity == .critical ? 6.0 : 4.0
         showToast(message, severity: severity, duration: duration)
     }
@@ -81,8 +81,8 @@ class ErrorPresenter {
         showToast(message, severity: .error, duration: 4.0)
     }
 
-    /// 分析 BVIError 并返回适当的展示信息
-    private func analyzeBVIError(_ error: BVIError, context: String?) -> (title: String, message: String, severity: Severity) {
+    /// 分析 TWError 并返回适当的展示信息
+    private func analyzeTWError(_ error: TWError, context: String?) -> (title: String, message: String, severity: Severity) {
         let contextPrefix = context.map { "[\($0)] " } ?? ""
 
         switch error {

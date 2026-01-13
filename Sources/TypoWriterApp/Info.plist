@@ -9,7 +9,7 @@
     <string>Typo Writer</string>
 
     <key>CFBundleIdentifier</key>
-    <string>com.bvi.app</string>
+    <string>com.tw.app</string>
 
     <key>CFBundleVersion</key>
     <string>1</string>

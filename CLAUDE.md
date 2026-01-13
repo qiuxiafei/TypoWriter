@@ -11,13 +11,13 @@ swift test               # Run all tests
 swift test --filter CoreTests.testPromptsGeneration  # Run single test
 ```
 
-The CLI executable is located at `.build/debug/bvi` after building.
+The CLI executable is located at `.build/debug/tw` after building.
 
 ## Architecture
 
 Typo Writer (TW) is a smart voice input tool that converts speech to refined text. It's built as a Swift Package with two main products:
 
-- **bvi**: CLI executable for end users
+- **tw**: CLI executable for end users
 - **TypoWriterCore**: Reusable library (designed for future GUI/iOS apps)
 
 ### Core Module Structure
@@ -31,7 +31,7 @@ The `Sources/Core/` module contains the core logic, designed to be platform-agno
   - Uses OpenAI-compatible API format (works with OpenAI, Claude, DeepSeek, Ollama, etc.)
   - Prompt templates in `Prompts.swift`
 - **Config/**: YAML config loading with environment variable expansion (`${VAR_NAME}` syntax)
-- **Models/**: Shared data types (`TranscriptionResult`, `ProcessedResult`, `FullProcessingResult`, `BVIError`)
+- **Models/**: Shared data types (`TranscriptionResult`, `ProcessedResult`, `FullProcessingResult`, `TWError`)
 
 ### Data Flow
 
@@ -41,7 +41,7 @@ The `Sources/Core/` module contains the core logic, designed to be platform-agno
 
 ### Configuration
 
-Config file location: `~/.config/bvi/config.yaml`
+Config file location: `~/.config/tw/config.yaml`
 
 Key configuration sections:
 - `speech_recognition`: ASR provider and credentials

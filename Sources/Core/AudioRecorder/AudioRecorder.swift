@@ -20,7 +20,7 @@ public class AudioRecorder: NSObject, AudioRecording {
     private var _isRecording = false
     public var isRecording: Bool { _isRecording }
 
-    private let audioBufferQueue = DispatchQueue(label: "com.bvi.audiobuffer")
+    private let audioBufferQueue = DispatchQueue(label: "com.tw.audiobuffer")
     private var audioBuffers: [AVAudioPCMBuffer] = []
 
     public override init() {
@@ -33,18 +33,18 @@ public class AudioRecorder: NSObject, AudioRecording {
         // 请求麦克风权限
         let hasPermission = await requestMicrophonePermission()
         guard hasPermission else {
-            throw BVIError.audioRecordingFailed("麦克风权限被拒绝")
+            throw TWError.audioRecordingFailed("麦克风权限被拒绝")
         }
 
         // 创建临时文件
         let tempDir = FileManager.default.temporaryDirectory
-        let fileName = "bvi_recording_\(UUID().uuidString).wav"
+        let fileName = "tw_recording_\(UUID().uuidString).wav"
         tempFileURL = tempDir.appendingPathComponent(fileName)
 
         // 设置音频引擎
         audioEngine = AVAudioEngine()
         guard let audioEngine = audioEngine else {
-            throw BVIError.audioRecordingFailed("无法创建音频引擎")
+            throw TWError.audioRecordingFailed("无法创建音频引擎")
         }
 
         let inputNode = audioEngine.inputNode
@@ -52,12 +52,12 @@ public class AudioRecorder: NSObject, AudioRecording {
 
         // 验证音频格式
         guard recordingFormat.sampleRate > 0 else {
-            throw BVIError.audioRecordingFailed("无效的音频格式")
+            throw TWError.audioRecordingFailed("无效的音频格式")
         }
 
         // 创建音频文件
         guard let fileURL = tempFileURL else {
-            throw BVIError.audioRecordingFailed("无法创建临时文件")
+            throw TWError.audioRecordingFailed("无法创建临时文件")
         }
 
         // 使用 16kHz 16-bit PCM 格式（兼容大多数 ASR 服务）
@@ -76,7 +76,7 @@ public class AudioRecorder: NSObject, AudioRecording {
                 settings: outputSettings
             )
         } catch {
-            throw BVIError.audioRecordingFailed("无法创建音频文件: \(error.localizedDescription)")
+            throw TWError.audioRecordingFailed("无法创建音频文件: \(error.localizedDescription)")
         }
 
         // 安装音频 tap
@@ -90,13 +90,13 @@ public class AudioRecorder: NSObject, AudioRecording {
             try audioEngine.start()
             _isRecording = true
         } catch {
-            throw BVIError.audioRecordingFailed("无法启动音频引擎: \(error.localizedDescription)")
+            throw TWError.audioRecordingFailed("无法启动音频引擎: \(error.localizedDescription)")
         }
     }
 
     public func stopRecording() async throws -> Data {
         guard _isRecording else {
-            throw BVIError.audioRecordingFailed("未在录音中")
+            throw TWError.audioRecordingFailed("未在录音中")
         }
 
         // 停止音频引擎
@@ -109,7 +109,7 @@ public class AudioRecorder: NSObject, AudioRecording {
 
         // 读取录音数据
         guard let fileURL = tempFileURL else {
-            throw BVIError.audioRecordingFailed("录音文件不存在")
+            throw TWError.audioRecordingFailed("录音文件不存在")
         }
 
         do {
@@ -121,7 +121,7 @@ public class AudioRecorder: NSObject, AudioRecording {
 
             return data
         } catch {
-            throw BVIError.audioRecordingFailed("无法读取录音文件: \(error.localizedDescription)")
+            throw TWError.audioRecordingFailed("无法读取录音文件: \(error.localizedDescription)")
         }
     }
 

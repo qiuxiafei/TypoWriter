@@ -70,7 +70,7 @@ public struct FullRewriteResult {
 
 // MARK: - 错误类型
 
-public enum BVIError: Error, LocalizedError {
+public enum TWError: Error, LocalizedError {
     case configNotFound(String)
     case configParseError(String)
     case audioRecordingFailed(String)

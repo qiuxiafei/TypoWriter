@@ -3,9 +3,9 @@ import Core
 import Foundation
 
 @main
-struct BVI: AsyncParsableCommand {
+struct TW: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "bvi",
+        commandName: "tw",
         abstract: "Typo Writer - 智能语音输入工具",
         discussion: """
         将语音转换为整理后的文字，支持：
@@ -29,7 +29,7 @@ struct BVI: AsyncParsableCommand {
 
         do {
             appConfig = try configLoader.load(from: config)
-        } catch BVIError.configNotFound(let path) {
+        } catch TWError.configNotFound(let path) {
             print("❌ 配置文件未找到: \(path)")
             print("")
             print("请创建配置文件，示例：")
@@ -42,7 +42,7 @@ struct BVI: AsyncParsableCommand {
         }
 
         // 创建核心处理器
-        let core = BVICore(config: appConfig)
+        let core = TWCore(config: appConfig)
 
         // 直接开始录音
         do {
@@ -97,7 +97,7 @@ struct BVI: AsyncParsableCommand {
 
     private func printExampleConfig() {
         print("""
-        # ~/.config/bvi/config.yaml
+        # ~/.config/tw/config.yaml
 
         speech_recognition:
           provider: aliyun

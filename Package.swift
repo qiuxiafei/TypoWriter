@@ -7,7 +7,7 @@ let package = Package(
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "bvi", targets: ["TypoWriter"]),
+        .executable(name: "tw", targets: ["TypoWriter"]),
         .executable(name: "TypoWriterApp", targets: ["TypoWriterApp"]),
         .library(name: "TypoWriterCore", targets: ["Core"])
     ],

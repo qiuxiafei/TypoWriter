@@ -12,7 +12,7 @@ public class AliyunASR: SpeechRecognizing {
 
     public func transcribe(audio: Data) async throws -> TranscriptionResult {
         guard !config.apiKey.isEmpty else {
-            throw BVIError.speechRecognitionFailed("API Key 未配置，请设置 DASHSCOPE_API_KEY 环境变量")
+            throw TWError.speechRecognitionFailed("API Key 未配置，请设置 DASHSCOPE_API_KEY 环境变量")
         }
 
         // 将音频数据转换为 Base64
@@ -21,7 +21,7 @@ public class AliyunASR: SpeechRecognizing {
 
         // 构建请求
         guard let url = URL(string: apiURL) else {
-            throw BVIError.speechRecognitionFailed("无效的 API URL")
+            throw TWError.speechRecognitionFailed("无效的 API URL")
         }
 
         var request = URLRequest(url: url)
@@ -57,12 +57,12 @@ public class AliyunASR: SpeechRecognizing {
 
         // 检查响应状态
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw BVIError.networkError("无效的响应")
+            throw TWError.networkError("无效的响应")
         }
 
         guard httpResponse.statusCode == 200 else {
             let errorMessage = String(data: data, encoding: .utf8) ?? "未知错误"
-            throw BVIError.speechRecognitionFailed("API 错误 (\(httpResponse.statusCode)): \(errorMessage)")
+            throw TWError.speechRecognitionFailed("API 错误 (\(httpResponse.statusCode)): \(errorMessage)")
         }
 
         // 解析响应
@@ -72,7 +72,7 @@ public class AliyunASR: SpeechRecognizing {
         let qwenResponse = try decoder.decode(QwenASRResponse.self, from: data)
 
         guard let text = qwenResponse.output.choices.first?.message.content.first?.text else {
-            throw BVIError.invalidResponse("响应中没有识别结果")
+            throw TWError.invalidResponse("响应中没有识别结果")
         }
 
         return TranscriptionResult(

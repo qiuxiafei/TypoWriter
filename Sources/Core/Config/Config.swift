@@ -106,7 +106,7 @@ public class ConfigLoader {
     /// 默认配置文件路径
     public var defaultConfigPath: String {
         let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-        return "\(homeDir)/.config/bvi/config.yaml"
+        return "\(homeDir)/.config/tw/config.yaml"
     }
 
     /// 加载配置文件
@@ -115,7 +115,7 @@ public class ConfigLoader {
 
         // 检查文件是否存在
         guard FileManager.default.fileExists(atPath: configPath) else {
-            throw BVIError.configNotFound(configPath)
+            throw TWError.configNotFound(configPath)
         }
 
         // 读取文件内容
@@ -134,7 +134,7 @@ public class ConfigLoader {
 
             return config
         } catch {
-            throw BVIError.configParseError(error.localizedDescription)
+            throw TWError.configParseError(error.localizedDescription)
         }
     }
 
@@ -187,7 +187,7 @@ public class ConfigLoader {
             let yaml = try encoder.encode(config)
             try yaml.write(toFile: configPath, atomically: true, encoding: .utf8)
         } catch {
-            throw BVIError.configParseError("无法保存配置文件: \(error.localizedDescription)")
+            throw TWError.configParseError("无法保存配置文件: \(error.localizedDescription)")
         }
     }
 

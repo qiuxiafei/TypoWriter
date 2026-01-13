@@ -16,7 +16,7 @@ public class DebugLogger {
     /// 日志文件路径
     public var logFilePath: String {
         let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-        return "\(homeDir)/.config/bvi/debug.log"
+        return "\(homeDir)/.config/tw/debug.log"
     }
 
     private let dateFormatter: DateFormatter

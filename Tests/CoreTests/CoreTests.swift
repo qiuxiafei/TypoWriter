@@ -45,7 +45,7 @@ processing:
   prompt: "测试"
 """
 
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("bvi_test_config.yaml")
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("tw_test_config.yaml")
         try content.write(to: tempURL, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: tempURL) }
 
@@ -56,7 +56,7 @@ processing:
     }
 
     func testCreateExampleConfig() throws {
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("bvi_example_config.yaml")
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("tw_example_config.yaml")
         defer { try? FileManager.default.removeItem(at: tempURL) }
 
         try ConfigLoader.shared.createExampleConfig(at: tempURL.path)
@@ -84,11 +84,11 @@ processing:
         XCTAssertTrue(textProcessor is OpenAICompatibleProcessor)
     }
 
-    func testBVIErrorDescriptions() {
-        let error1 = BVIError.configNotFound("/path/to/config")
+    func testTWErrorDescriptions() {
+        let error1 = TWError.configNotFound("/path/to/config")
         XCTAssertTrue(error1.errorDescription?.contains("配置文件未找到") ?? false)
 
-        let error2 = BVIError.speechRecognitionFailed("测试错误")
+        let error2 = TWError.speechRecognitionFailed("测试错误")
         XCTAssertTrue(error2.errorDescription?.contains("语音识别失败") ?? false)
     }
 }

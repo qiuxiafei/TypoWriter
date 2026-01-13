@@ -4,7 +4,7 @@
 import Foundation
 
 /// 处理阶段
-public enum BVIProcessingPhase {
+public enum TWProcessingPhase {
     case stoppingRecording   // 停止录音
     case transcribing        // 语音转文字
     case processing          // 文本优化
@@ -12,7 +12,7 @@ public enum BVIProcessingPhase {
 }
 
 /// TypoWriter 核心处理流程
-public class BVICore {
+public class TWCore {
     private let config: Config
     private let audioRecorder: AudioRecording
     private let speechRecognizer: SpeechRecognizing
@@ -34,7 +34,7 @@ public class BVICore {
     /// - Parameter onPhaseChange: 阶段变化回调
     /// - Returns: 完整处理结果
     public func stopAndProcess(
-        onPhaseChange: ((BVIProcessingPhase) -> Void)? = nil
+        onPhaseChange: ((TWProcessingPhase) -> Void)? = nil
     ) async throws -> FullProcessingResult {
         // 1. 停止录音，获取音频数据
         onPhaseChange?(.stoppingRecording)
@@ -68,7 +68,7 @@ public class BVICore {
     /// - Returns: 完整改写结果
     public func stopAndRewrite(
         originalText: String,
-        onPhaseChange: ((BVIProcessingPhase) -> Void)? = nil
+        onPhaseChange: ((TWProcessingPhase) -> Void)? = nil
     ) async throws -> FullRewriteResult {
         // 1. 停止录音，获取音频数据
         onPhaseChange?(.stoppingRecording)
