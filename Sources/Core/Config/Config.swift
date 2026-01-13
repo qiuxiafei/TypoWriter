@@ -194,7 +194,7 @@ public class ConfigLoader {
     /// 创建示例配置文件
     public func createExampleConfig(at path: String) throws {
         let exampleContent = """
-        # Better Voice Input 配置文件
+        # TypoWriter 配置文件
 
         speech_recognition:
           provider: aliyun  # aliyun | openai | apple

@@ -2,7 +2,7 @@ import AppKit
 import Core
 
 @main
-struct BetterVoiceInputApp {
+struct TypoWriterApp {
     private static let appDelegate = AppDelegate()
 
     static func main() {
@@ -146,7 +146,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
 
         let alert = NSAlert()
-        alert.messageText = "欢迎使用 Better Voice Input"
+        alert.messageText = "欢迎使用 TypoWriter"
         alert.informativeText = """
         已为您创建默认配置文件。
 

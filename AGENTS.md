@@ -1,12 +1,12 @@
 # AGENTS.md
 
 ## Repository Overview
-- Project: Better Voice Input (BVI)
+- Project: Typo Writer (TW)
 - Language: Swift Package Manager (Swift 5.9)
-- Products: CLI `bvi`, menubar app `BetterVoiceInputApp`, library `BetterVoiceInputCore`
+- Products: CLI `bvi`, menubar app `TypoWriterApp` (Typo Writer), library `TypoWriterCore`
 - Platforms: macOS 13+
 - Core modules live under `Sources/Core`
-- UI/app modules live under `Sources/BetterVoiceInputApp`
+- UI/app modules live under `Sources/TypoWriterApp`
 
 ## Required External Rules
 - No Cursor rules found in `.cursor/rules/` or `.cursorrules`
@@ -31,8 +31,8 @@
 - `Sources/Core/TextProcessor`: LLM text processing
 - `Sources/Core/Config`: YAML config loading
 - `Sources/Core/Models`: shared domain models + errors
-- `Sources/BetterVoiceInput`: CLI entrypoint
-- `Sources/BetterVoiceInputApp`: macOS app
+- `Sources/TypoWriter`: CLI entrypoint
+- `Sources/TypoWriterApp`: macOS app
 - `Tests/CoreTests`: unit tests for Core
 
 ## Code Style Summary

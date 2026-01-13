@@ -15,10 +15,10 @@ The CLI executable is located at `.build/debug/bvi` after building.
 
 ## Architecture
 
-Better Voice Input (BVI) is a smart voice input tool that converts speech to refined text. It's built as a Swift Package with two main products:
+Typo Writer (TW) is a smart voice input tool that converts speech to refined text. It's built as a Swift Package with two main products:
 
 - **bvi**: CLI executable for end users
-- **BetterVoiceInputCore**: Reusable library (designed for future GUI/iOS apps)
+- **TypoWriterCore**: Reusable library (designed for future GUI/iOS apps)
 
 ### Core Module Structure
 

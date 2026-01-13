@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "BetterVoiceInput",
+    name: "TypoWriter",
     platforms: [
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "bvi", targets: ["BetterVoiceInput"]),
-        .executable(name: "BetterVoiceInputApp", targets: ["BetterVoiceInputApp"]),
-        .library(name: "BetterVoiceInputCore", targets: ["Core"])
+        .executable(name: "bvi", targets: ["TypoWriter"]),
+        .executable(name: "TypoWriterApp", targets: ["TypoWriterApp"]),
+        .library(name: "TypoWriterCore", targets: ["Core"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMinor(from: "1.3.0")),
@@ -17,16 +17,16 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "BetterVoiceInput",
+            name: "TypoWriter",
             dependencies: [
                 "Core",
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ]
         ),
         .executableTarget(
-            name: "BetterVoiceInputApp",
+            name: "TypoWriterApp",
             dependencies: ["Core"],
-            exclude: ["Info.plist", "BetterVoiceInputApp.entitlements"]
+            exclude: ["Info.plist", "TypoWriterApp.entitlements"]
         ),
         .target(
             name: "Core",

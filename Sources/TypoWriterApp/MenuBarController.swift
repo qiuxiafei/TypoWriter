@@ -14,7 +14,7 @@ class MenuBarController {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "teletype.answer", accessibilityDescription: "Better Voice Input")
+            button.image = NSImage(systemSymbolName: "teletype.answer", accessibilityDescription: "TypoWriter")
             button.image?.isTemplate = true
         }
 
@@ -76,7 +76,7 @@ class MenuBarController {
         if let button = statusItem?.button {
             button.image = NSImage(
                 systemSymbolName: isEnabled ? "teletype.answer" : "mic.slash.fill",
-                accessibilityDescription: "Better Voice Input"
+                accessibilityDescription: "TypoWriter"
             )
         }
 

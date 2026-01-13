@@ -11,7 +11,7 @@ public enum BVIProcessingPhase {
     case rewriting           // 文本改写
 }
 
-/// Better Voice Input 核心处理流程
+/// TypoWriter 核心处理流程
 public class BVICore {
     private let config: Config
     private let audioRecorder: AudioRecording

@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# Better Voice Input 打包脚本
+# Typo Writer 打包脚本
 # 用法: ./scripts/package.sh [--notarize]
 
 set -e
 
 # 配置
-APP_NAME="Better Voice Input"
+APP_NAME="Typo Writer"
 BUNDLE_ID="com.bvi.app"
 VERSION="1.0.0"
 BUILD_DIR=".build/release"
 APP_DIR="$BUILD_DIR/$APP_NAME.app"
-DMG_NAME="BetterVoiceInput-$VERSION.dmg"
+DMG_NAME="TypoWriter-$VERSION.dmg"
 OUTPUT_DIR="dist"
 
 # 颜色输出
@@ -50,7 +50,7 @@ check_dependencies() {
 # 构建 Release 版本
 build_app() {
     log_info "构建 Release 版本..."
-    swift build -c release --product BetterVoiceInputApp
+    swift build -c release --product TypoWriterApp
 }
 
 # 创建 .app 包结构
@@ -65,11 +65,11 @@ create_app_bundle() {
     mkdir -p "$APP_DIR/Contents/Resources"
 
     # 复制可执行文件
-    cp "$BUILD_DIR/BetterVoiceInputApp" "$APP_DIR/Contents/MacOS/"
+    cp "$BUILD_DIR/TypoWriterApp" "$APP_DIR/Contents/MacOS/"
 
     # 复制 Info.plist
-    if [ -f "Sources/BetterVoiceInputApp/Info.plist" ]; then
-        cp "Sources/BetterVoiceInputApp/Info.plist" "$APP_DIR/Contents/"
+    if [ -f "Sources/TypoWriterApp/Info.plist" ]; then
+        cp "Sources/TypoWriterApp/Info.plist" "$APP_DIR/Contents/"
     else
         log_error "Info.plist 未找到"
         exit 1
@@ -102,9 +102,9 @@ sign_app() {
         log_info "使用证书: $IDENTITY"
 
         # 签名应用
-        if [ -f "Sources/BetterVoiceInputApp/BetterVoiceInputApp.entitlements" ]; then
+        if [ -f "Sources/TypoWriterApp/TypoWriterApp.entitlements" ]; then
             codesign --force --deep --options runtime \
-                --entitlements "Sources/BetterVoiceInputApp/BetterVoiceInputApp.entitlements" \
+                --entitlements "Sources/TypoWriterApp/TypoWriterApp.entitlements" \
                 --sign "$IDENTITY" \
                 "$APP_DIR"
         else

@@ -6,7 +6,7 @@ import Foundation
 struct BVI: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "bvi",
-        abstract: "Better Voice Input - 智能语音输入工具",
+        abstract: "Typo Writer - 智能语音输入工具",
         discussion: """
         将语音转换为整理后的文字，支持：
         - 智能整理：去除口语化表达

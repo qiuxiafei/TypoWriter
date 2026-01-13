@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Better Voice Input</string>
+    <string>Typo Writer</string>
 
     <key>CFBundleDisplayName</key>
-    <string>Better Voice Input</string>
+    <string>Typo Writer</string>
 
     <key>CFBundleIdentifier</key>
     <string>com.bvi.app</string>
@@ -21,7 +21,7 @@
     <string>APPL</string>
 
     <key>CFBundleExecutable</key>
-    <string>BetterVoiceInputApp</string>
+    <string>TypoWriterApp</string>
 
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
@@ -36,7 +36,7 @@
     <true/>
 
     <key>NSMicrophoneUsageDescription</key>
-    <string>Better Voice Input 需要使用麦克风来录制语音，以便将其转换为文字。</string>
+    <string>Typo Writer 需要使用麦克风来录制语音，以便将其转换为文字。</string>
 
     <key>NSHumanReadableCopyright</key>
     <string>Copyright 2025. All rights reserved.</string>
