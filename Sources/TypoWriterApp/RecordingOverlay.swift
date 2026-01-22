@@ -79,6 +79,10 @@ class RecordingOverlay {
 
     func show(state: ProcessingState = .recording) {
         viewModel.state = state
+        viewModel.isActive = true
+        if window == nil {
+            setupWindow()
+        }
         window?.orderFront(nil)
     }
 
@@ -87,12 +91,16 @@ class RecordingOverlay {
     }
 
     func hide() {
-        window?.orderOut(nil)
+        viewModel.isActive = false
+        window?.close()
+        window = nil
+        hostingView = nil
     }
 }
 
 class RecordingOverlayViewModel: ObservableObject {
     @Published var state: ProcessingState = .recording
+    @Published var isActive: Bool = false
 }
 
 struct RecordingOverlayView: View {
@@ -101,6 +109,40 @@ struct RecordingOverlayView: View {
     @State private var rotation: Double = 0
 
     var body: some View {
+        Group {
+            if viewModel.isActive {
+                contentView
+            } else {
+                Color.clear
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: viewModel.state)
+        .onAppear {
+            if viewModel.isActive {
+                startAnimations()
+            }
+        }
+        .onChange(of: viewModel.state) { _ in
+            guard viewModel.isActive else {
+                stopAnimations()
+                return
+            }
+            // 状态切换时重置动画
+            stopAnimations()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                startAnimations()
+            }
+        }
+        .onChange(of: viewModel.isActive) { isActive in
+            if isActive {
+                startAnimations()
+            } else {
+                stopAnimations()
+            }
+        }
+    }
+
+    private var contentView: some View {
         HStack(spacing: 10) {
             // 状态图标
             ZStack {
@@ -127,17 +169,6 @@ struct RecordingOverlayView: View {
             Capsule()
                 .fill(Color.black.opacity(0.8))
         )
-        .animation(.easeInOut(duration: 0.3), value: viewModel.state)
-        .onAppear {
-            startAnimations()
-        }
-        .onChange(of: viewModel.state) { _ in
-            // 状态切换时重置动画
-            isPulsing = false
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                startAnimations()
-            }
-        }
     }
 
     private func startAnimations() {
@@ -154,5 +185,10 @@ struct RecordingOverlayView: View {
         } else {
             rotation = 0
         }
+    }
+
+    private func stopAnimations() {
+        isPulsing = false
+        rotation = 0
     }
 }
