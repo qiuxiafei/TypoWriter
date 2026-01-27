@@ -10,13 +10,7 @@ public protocol SpeechRecognizing {
 
 public class SpeechRecognizerFactory {
     public static func create(config: SpeechRecognitionConfig) -> SpeechRecognizing {
-        switch config.provider {
-        case .aliyun:
-            return AliyunASR(config: config.aliyun ?? AliyunConfig())
-        case .openai:
-            fatalError("OpenAI Whisper 暂未实现")
-        case .apple:
-            fatalError("Apple Speech 暂未实现")
-        }
+        let resolvedConfig = config.resolve()
+        return AliyunASR(config: resolvedConfig)
     }
 }

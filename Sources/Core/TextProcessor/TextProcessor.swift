@@ -14,6 +14,7 @@ public protocol TextProcessing {
 
 public class TextProcessorFactory {
     public static func create(config: TextProcessingConfig) -> TextProcessing {
-        return OpenAICompatibleProcessor(config: config)
+        let resolvedConfig = config.resolve()
+        return OpenAICompatibleProcessor(config: resolvedConfig)
     }
 }

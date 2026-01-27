@@ -47,22 +47,18 @@ final class ConfigWindowController {
 
 final class ConfigViewModel: ObservableObject {
     enum FieldKey: String, CaseIterable {
-        case provider
-        case aliyunApiKey
-        case aliyunModel
-        case textBaseUrl
+        case speechApiKey
         case textApiKey
-        case textModel
         case processingPrompt
         case rewritePrompt
     }
 
-    @Published var provider: SpeechProvider
-    @Published var aliyunApiKey: String
-    @Published var aliyunModel: String
-    @Published var textBaseUrl: String
+    @Published var speechPreset: SpeechRecognitionPreset
+    @Published var speechApiKey: String
+
+    @Published var textPreset: TextProcessingPreset
     @Published var textApiKey: String
-    @Published var textModel: String
+
     @Published var useDefaultProcessingPrompt: Bool
     @Published var processingPrompt: String
     @Published var useDefaultRewritePrompt: Bool
@@ -73,13 +69,12 @@ final class ConfigViewModel: ObservableObject {
     var onSave: ((Config) -> Void)?
 
     init(config: Config, onSave: ((Config) -> Void)? = nil) {
-        provider = config.speechRecognition.provider
-        let aliyunConfig = config.speechRecognition.aliyun ?? AliyunConfig()
-        aliyunApiKey = aliyunConfig.apiKey
-        aliyunModel = aliyunConfig.model
-        textBaseUrl = config.textProcessing.baseUrl
-        textApiKey = config.textProcessing.apiKey
-        textModel = config.textProcessing.model
+        speechPreset = config.speechRecognition.preset
+        speechApiKey = config.speechRecognition.credentials.apiKey
+
+        textPreset = config.textProcessing.preset
+        textApiKey = config.textProcessing.credentials.apiKey
+
         processingPrompt = config.processing.prompt ?? ""
         useDefaultProcessingPrompt = config.processing.prompt?.isEmpty ?? true
         rewritePrompt = config.processing.rewritePrompt ?? ""
@@ -93,13 +88,12 @@ final class ConfigViewModel: ObservableObject {
     }
 
     func update(with config: Config) {
-        provider = config.speechRecognition.provider
-        let aliyunConfig = config.speechRecognition.aliyun ?? AliyunConfig()
-        aliyunApiKey = aliyunConfig.apiKey
-        aliyunModel = aliyunConfig.model
-        textBaseUrl = config.textProcessing.baseUrl
-        textApiKey = config.textProcessing.apiKey
-        textModel = config.textProcessing.model
+        speechPreset = config.speechRecognition.preset
+        speechApiKey = config.speechRecognition.credentials.apiKey
+
+        textPreset = config.textProcessing.preset
+        textApiKey = config.textProcessing.credentials.apiKey
+
         processingPrompt = config.processing.prompt ?? ""
         useDefaultProcessingPrompt = config.processing.prompt?.isEmpty ?? true
         rewritePrompt = config.processing.rewritePrompt ?? ""
@@ -131,9 +125,16 @@ final class ConfigViewModel: ObservableObject {
     }
 
     func currentConfig() -> Config {
-        let aliyunConfig = AliyunConfig(apiKey: aliyunApiKey, model: aliyunModel)
-        let speechConfig = SpeechRecognitionConfig(provider: provider, aliyun: aliyunConfig)
-        let textConfig = TextProcessingConfig(baseUrl: textBaseUrl, apiKey: textApiKey, model: textModel)
+        let speechConfig = SpeechRecognitionConfig(
+            preset: speechPreset,
+            credentials: APICredentials(apiKey: speechApiKey)
+        )
+
+        let textConfig = TextProcessingConfig(
+            preset: textPreset,
+            credentials: APICredentials(apiKey: textApiKey)
+        )
+
         let processingConfig = ProcessingConfig(
             prompt: useDefaultProcessingPrompt ? nil : processingPrompt,
             rewritePrompt: useDefaultRewritePrompt ? nil : rewritePrompt
@@ -149,34 +150,19 @@ final class ConfigViewModel: ObservableObject {
     private func validate(showErrors: Bool) -> Bool {
         var newErrors: [FieldKey: String] = [:]
 
-        if provider == .aliyun {
-            if aliyunApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                newErrors[.aliyunApiKey] = "请输入语音识别 API Key"
-            }
-            if aliyunModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                newErrors[.aliyunModel] = "请输入语音识别模型"
-            }
+        if speechApiKey.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty {
+            newErrors[.speechApiKey] = "请输入语音识别 API Key"
         }
 
-        if textBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            newErrors[.textBaseUrl] = "请输入文本处理 Base URL"
-        } else if !isValidURL(textBaseUrl) {
-            newErrors[.textBaseUrl] = "Base URL 不是有效的 URL"
-        }
-
-        if textApiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if textApiKey.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty {
             newErrors[.textApiKey] = "请输入文本处理 API Key"
         }
 
-        if textModel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            newErrors[.textModel] = "请输入文本处理模型"
-        }
-
-        if !useDefaultProcessingPrompt && processingPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if !useDefaultProcessingPrompt && processingPrompt.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty {
             newErrors[.processingPrompt] = "请输入自定义文本处理 prompt"
         }
 
-        if !useDefaultRewritePrompt && rewritePrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if !useDefaultRewritePrompt && rewritePrompt.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty {
             newErrors[.rewritePrompt] = "请输入自定义改写 prompt"
         }
 
@@ -185,13 +171,6 @@ final class ConfigViewModel: ObservableObject {
         }
 
         return newErrors.isEmpty
-    }
-
-    private func isValidURL(_ value: String) -> Bool {
-        guard let url = URL(string: value.trimmingCharacters(in: .whitespacesAndNewlines)) else {
-            return false
-        }
-        return url.scheme?.isEmpty == false && url.host?.isEmpty == false
     }
 }
 
@@ -215,22 +194,16 @@ struct ConfigWindowView: View {
             footer
         }
         .frame(minWidth: 540, minHeight: 600)
-        .onChange(of: viewModel.provider) { _ in
+        .onChange(of: viewModel.speechPreset) { _ in
             viewModel.updateValidation()
         }
-        .onChange(of: viewModel.aliyunApiKey) { _ in
+        .onChange(of: viewModel.speechApiKey) { _ in
             viewModel.updateValidation()
         }
-        .onChange(of: viewModel.aliyunModel) { _ in
-            viewModel.updateValidation()
-        }
-        .onChange(of: viewModel.textBaseUrl) { _ in
+        .onChange(of: viewModel.textPreset) { _ in
             viewModel.updateValidation()
         }
         .onChange(of: viewModel.textApiKey) { _ in
-            viewModel.updateValidation()
-        }
-        .onChange(of: viewModel.textModel) { _ in
             viewModel.updateValidation()
         }
         .onChange(of: viewModel.useDefaultProcessingPrompt) { _ in
@@ -262,35 +235,48 @@ struct ConfigWindowView: View {
     }
 
     private var speechSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let resolved = SpeechRecognitionPresets.resolve(viewModel.speechPreset)
+
+        return VStack(alignment: .leading, spacing: 12) {
             Text("语音识别")
                 .font(.headline)
 
-            Picker("服务商", selection: $viewModel.provider) {
-                Text("阿里云").tag(SpeechProvider.aliyun)
-                Text("OpenAI").tag(SpeechProvider.openai)
-                Text("Apple").tag(SpeechProvider.apple)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("配置方案")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Picker("配置方案", selection: $viewModel.speechPreset) {
+                    Text(viewModel.speechPreset.displayName)
+                        .tag(viewModel.speechPreset)
+                }
             }
-            .pickerStyle(.segmented)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("API Key")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                TextField("", text: $viewModel.aliyunApiKey)
-                    .disabled(viewModel.provider != .aliyun)
-                    .opacity(viewModel.provider != .aliyun ? 0.6 : 1.0)
-                errorText(for: .aliyunApiKey)
+                TextField("", text: $viewModel.speechApiKey)
+                errorText(for: .speechApiKey)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Endpoint")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text(resolved.endpoint.absoluteString)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .textSelection(.enabled)
             }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("模型")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                TextField("", text: $viewModel.aliyunModel)
-                    .disabled(viewModel.provider != .aliyun)
-                    .opacity(viewModel.provider != .aliyun ? 0.6 : 1.0)
-                errorText(for: .aliyunModel)
+                Text(resolved.model)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .textSelection(.enabled)
             }
         }
         .padding(16)
@@ -299,16 +285,20 @@ struct ConfigWindowView: View {
     }
 
     private var textProcessingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let resolved = TextProcessingPresets.resolve(viewModel.textPreset)
+
+        return VStack(alignment: .leading, spacing: 12) {
             Text("文本处理")
                 .font(.headline)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Base URL")
+                Text("配置方案")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                TextField("", text: $viewModel.textBaseUrl)
-                errorText(for: .textBaseUrl)
+                Picker("配置方案", selection: $viewModel.textPreset) {
+                    Text(viewModel.textPreset.displayName)
+                        .tag(viewModel.textPreset)
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -320,11 +310,23 @@ struct ConfigWindowView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
+                Text("Endpoint")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text(resolved.endpoint.absoluteString)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .textSelection(.enabled)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
                 Text("模型")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                TextField("", text: $viewModel.textModel)
-                errorText(for: .textModel)
+                Text(resolved.model)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .textSelection(.enabled)
             }
         }
         .padding(16)

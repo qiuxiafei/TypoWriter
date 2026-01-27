@@ -32,18 +32,18 @@ final class CoreTests: XCTestCase {
         defer { unsetenv("TEST_API_KEY") }
 
         let content = """
-speech_recognition:
-  provider: aliyun
-  aliyun:
-    api_key: ${TEST_API_KEY}
-    model: qwen3-asr-flash
-text_processing:
-  base_url: https://example.com/v1
-  api_key: ${TEST_API_KEY}
-  model: gpt-4o
-processing:
-  prompt: "测试"
-"""
+ speech_recognition:
+   preset: dashscope_qwen_asr
+   credentials:
+     api_key: ${TEST_API_KEY}
+ text_processing:
+   preset: dashscope_qwen_plus
+   credentials:
+     api_key: ${TEST_API_KEY}
+ processing:
+   prompt: "测试"
+ """
+
 
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("tw_test_config.yaml")
         try content.write(to: tempURL, atomically: true, encoding: .utf8)
@@ -51,8 +51,8 @@ processing:
 
         let config = try ConfigLoader.shared.load(from: tempURL.path)
 
-        XCTAssertEqual(config.speechRecognition.aliyun?.apiKey, "test_value_123")
-        XCTAssertEqual(config.textProcessing.apiKey, "test_value_123")
+        XCTAssertEqual(config.speechRecognition.credentials.apiKey, "test_value_123")
+        XCTAssertEqual(config.textProcessing.credentials.apiKey, "test_value_123")
     }
 
     func testCreateExampleConfig() throws {
@@ -69,16 +69,15 @@ processing:
 
     func testFactoryCreation() {
         let speechConfig = SpeechRecognitionConfig(
-            provider: .aliyun,
-            aliyun: AliyunConfig(apiKey: "", model: "qwen3-asr-flash")
+            preset: .dashscopeQwenASR,
+            credentials: APICredentials(apiKey: "")
         )
         let speechRecognizer = SpeechRecognizerFactory.create(config: speechConfig)
         XCTAssertTrue(speechRecognizer is AliyunASR)
 
         let textConfig = TextProcessingConfig(
-            baseUrl: "https://example.com/v1",
-            apiKey: "test",
-            model: "gpt-4o"
+            preset: .dashscopeQwenPlus,
+            credentials: APICredentials(apiKey: "test")
         )
         let textProcessor = TextProcessorFactory.create(config: textConfig)
         XCTAssertTrue(textProcessor is OpenAICompatibleProcessor)

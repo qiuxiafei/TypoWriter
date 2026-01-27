@@ -3,16 +3,15 @@ import Foundation
 /// 阿里云百炼 ASR 实现（通义千问语音识别）
 /// 参考文档：https://help.aliyun.com/zh/model-studio/qwen-speech-recognition
 public class AliyunASR: SpeechRecognizing {
-    private let config: AliyunConfig
-    private let apiURL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation"
+    private let config: ResolvedSpeechRecognitionConfig
 
-    public init(config: AliyunConfig) {
+    public init(config: ResolvedSpeechRecognitionConfig) {
         self.config = config
     }
 
     public func transcribe(audio: Data) async throws -> TranscriptionResult {
         guard !config.apiKey.isEmpty else {
-            throw TWError.speechRecognitionFailed("API Key 未配置，请设置 DASHSCOPE_API_KEY 环境变量")
+            throw TWError.speechRecognitionFailed("API Key 未配置")
         }
 
         // 将音频数据转换为 Base64
@@ -20,9 +19,7 @@ public class AliyunASR: SpeechRecognizing {
         let audioDataURL = "data:audio/wav;base64,\(base64Audio)"
 
         // 构建请求
-        guard let url = URL(string: apiURL) else {
-            throw TWError.speechRecognitionFailed("无效的 API URL")
-        }
+        let url = config.endpoint
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -44,7 +41,7 @@ public class AliyunASR: SpeechRecognizing {
                 ]
             ),
             parameters: QwenASRParameters(
-                asrOptions: ASROptions(enableItn: true)
+                asrOptions: ASROptions(enableItn: config.enableItn)
             )
         )
 

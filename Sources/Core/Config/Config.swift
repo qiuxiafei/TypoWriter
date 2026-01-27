@@ -18,6 +18,13 @@ public struct Config: Codable {
         self.processing = processing
     }
 
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        speechRecognition = try container.decode(SpeechRecognitionConfig.self, forKey: .speechRecognition)
+        textProcessing = try container.decode(TextProcessingConfig.self, forKey: .textProcessing)
+        processing = try container.decodeIfPresent(ProcessingConfig.self, forKey: .processing) ?? .init()
+    }
+
     enum CodingKeys: String, CodingKey {
         case speechRecognition = "speech_recognition"
         case textProcessing = "text_processing"
@@ -25,59 +32,64 @@ public struct Config: Codable {
     }
 }
 
-public struct SpeechRecognitionConfig: Codable {
-    public var provider: SpeechProvider
-    public var aliyun: AliyunConfig?
 
-    public init(
-        provider: SpeechProvider = .aliyun,
-        aliyun: AliyunConfig? = nil
-    ) {
-        self.provider = provider
-        self.aliyun = aliyun
-    }
-}
-
-public enum SpeechProvider: String, Codable {
-    case aliyun
-    case openai
-    case apple
-}
-
-public struct AliyunConfig: Codable {
+public struct APICredentials: Codable {
     public var apiKey: String
-    public var model: String
 
-    public init(apiKey: String = "", model: String = "qwen3-asr-flash") {
+    public init(apiKey: String = "") {
         self.apiKey = apiKey
-        self.model = model
     }
 
     enum CodingKeys: String, CodingKey {
         case apiKey = "api_key"
-        case model
+    }
+}
+
+public enum SpeechRecognitionPreset: String, Codable {
+    case dashscopeQwenASR = "dashscope_qwen_asr"
+
+    public var displayName: String {
+        switch self {
+        case .dashscopeQwenASR:
+            return "DashScope - Qwen ASR"
+        }
+    }
+}
+
+public struct SpeechRecognitionConfig: Codable {
+    public var preset: SpeechRecognitionPreset
+    public var credentials: APICredentials
+
+    public init(
+        preset: SpeechRecognitionPreset = .dashscopeQwenASR,
+        credentials: APICredentials = .init()
+    ) {
+        self.preset = preset
+        self.credentials = credentials
+    }
+}
+
+public enum TextProcessingPreset: String, Codable {
+    case dashscopeQwenPlus = "dashscope_qwen_plus"
+
+    public var displayName: String {
+        switch self {
+        case .dashscopeQwenPlus:
+            return "DashScope - Qwen Plus"
+        }
     }
 }
 
 public struct TextProcessingConfig: Codable {
-    public var baseUrl: String
-    public var apiKey: String
-    public var model: String
+    public var preset: TextProcessingPreset
+    public var credentials: APICredentials
 
     public init(
-        baseUrl: String = "https://api.openai.com/v1",
-        apiKey: String = "",
-        model: String = "gpt-4o"
+        preset: TextProcessingPreset = .dashscopeQwenPlus,
+        credentials: APICredentials = .init()
     ) {
-        self.baseUrl = baseUrl
-        self.apiKey = apiKey
-        self.model = model
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case baseUrl = "base_url"
-        case apiKey = "api_key"
-        case model
+        self.preset = preset
+        self.credentials = credentials
     }
 }
 
@@ -197,16 +209,14 @@ public class ConfigLoader {
         # TypoWriter 配置文件
 
         speech_recognition:
-          provider: aliyun  # aliyun | openai | apple
-          aliyun:
+          preset: dashscope_qwen_asr
+          credentials:
             api_key: ${DASHSCOPE_API_KEY}
-            model: qwen3-asr-flash
 
         text_processing:
-          # OpenAI 兼容格式，支持 OpenAI、Claude、Ollama、DeepSeek 等
-          base_url: https://api.openai.com/v1
-          api_key: ${OPENAI_API_KEY}
-          model: gpt-4o
+          preset: dashscope_qwen_plus
+          credentials:
+            api_key: ${DASHSCOPE_API_KEY}
 
         # 可选：自定义文本处理 prompt
         # processing:

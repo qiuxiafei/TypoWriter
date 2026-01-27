@@ -61,8 +61,8 @@ class ConfigSetupManager {
             let config = try ConfigLoader.shared.load()
 
             // 4. 检查 API Key 是否已配置
-            if isApiKeyPlaceholder(config.speechRecognition.aliyun?.apiKey) ||
-               isApiKeyPlaceholder(config.textProcessing.apiKey) {
+            if isApiKeyPlaceholder(config.speechRecognition.credentials.apiKey) ||
+               isApiKeyPlaceholder(config.textProcessing.credentials.apiKey) {
                 return .needsApiKey
             }
 
@@ -81,8 +81,8 @@ class ConfigSetupManager {
             "<填入你的",
             "YOUR_API_KEY",
             "sk-xxx",
-            "${DASHSCOPE_API_KEY}",
-            "${OPENAI_API_KEY}",
+             "${DASHSCOPE_API_KEY}",
+
             "your-api-key"
         ]
         return placeholders.contains(where: { key.contains($0) || key == $0 })

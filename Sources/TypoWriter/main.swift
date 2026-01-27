@@ -100,18 +100,20 @@ struct TW: AsyncParsableCommand {
         # ~/.config/tw/config.yaml
 
         speech_recognition:
-          provider: aliyun
-          aliyun:
+          preset: dashscope_qwen_asr
+          credentials:
             api_key: ${DASHSCOPE_API_KEY}
-            model: qwen3-asr-flash
 
         text_processing:
-          base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
-          api_key: ${DASHSCOPE_API_KEY}
-          model: qwen-plus
+          preset: dashscope_qwen_plus
+          credentials:
+            api_key: ${DASHSCOPE_API_KEY}
 
-        processing:
-          preserve_style: true
+        # processing:
+        #   prompt: |
+        #     ...
+        #   rewrite_prompt: |
+        #     ...
         """)
     }
 

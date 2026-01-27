@@ -2,15 +2,14 @@
 # 将此文件复制到 ~/.config/tw/config.yaml 并填入你的 API Key
 
 speech_recognition:
-  provider: aliyun
-  aliyun:
+  preset: dashscope_qwen_asr
+  credentials:
     api_key: <填入你的API Key>
-    model: qwen3-asr-flash
 
 text_processing:
-  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
-  api_key: <填入你的API Key>
-  model: qwen-plus
+  preset: dashscope_qwen_plus
+  credentials:
+    api_key: <填入你的API Key>
 
 # 以下是高级功能：
 # 当输出文本不满足您的期望时，反注释以下配置项，可以通过调整提词优化文本处理的输出。

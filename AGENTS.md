@@ -2,150 +2,137 @@
 
 ## Repository Overview
 - Project: Typo Writer (TW)
-- Language: Swift Package Manager (Swift 5.9)
-- Products: CLI `tw`, menubar app `TypoWriterApp` (Typo Writer), library `TypoWriterCore`
+- Language/Build: Swift Package Manager (Swift 5.9)
 - Platforms: macOS 13+
-- Core modules live under `Sources/Core`
-- UI/app modules live under `Sources/TypoWriterApp`
+- Products:
+  - CLI executable: `tw` (target: `TypoWriter`)
+  - Menubar app: `TypoWriterApp` (target: `TypoWriterApp`)
+  - Library: `TypoWriterCore` (target: `Core`)
 
-## Required External Rules
-- No Cursor rules found in `.cursor/rules/` or `.cursorrules`
-- No Copilot instructions found in `.github/copilot-instructions.md`
+## External Agent Rules
+- Cursor rules:
+  - `.cursor/rules/`: none found
+  - `.cursorrules`: none found
+- Copilot rules:
+  - `.github/copilot-instructions.md`: none found
 
-## Build / Test Commands
-- Build debug: `swift build`
-- Build release: `swift build -c release`
+## Build / Run / Test Commands
+- Build (debug): `swift build`
+- Build (release): `swift build -c release`
+- Clean build artifacts: `swift package clean`
+
+- Run CLI (via SPM): `swift run tw --help`
+- Run CLI (built binary): `.build/debug/tw --help`
+- Release binary path: `.build/release/tw`
+
 - Run all tests: `swift test`
-- Run a single test: `swift test --filter CoreTests.testPromptsGeneration`
-- CLI executable output: `.build/debug/tw`
+- Run tests with parallelization disabled (sometimes helps debugging): `swift test --parallel false`
+
+### Run a Single Test (important)
+SwiftPM test filtering is regex-based. Use the fully-qualified `TestSuite.testMethod` form.
+- Run one test method:
+  - `swift test --filter CoreTests.testConfigEnvironmentExpansion`
+  - `swift test --filter CoreTests.testPromptsGenerationWithCustomPrompt`
+- Run all tests in a test case:
+  - `swift test --filter CoreTests`
+- Handy grep-style filter (regex):
+  - `swift test --filter "TWError"`
 
 ## Project Layout
-- `Package.swift`: SPM manifest with dependencies
-
-## Linting / Formatting Tools
-- No SwiftLint/SwiftFormat config in repo
-- Keep formatting consistent with existing code
-- Avoid adding new lint/format tools unless requested
-- `Sources/Core/AudioRecorder`: AVFoundation recorder
-- `Sources/Core/SpeechRecognition`: ASR abstraction + implementations
-- `Sources/Core/TextProcessor`: LLM text processing
-- `Sources/Core/Config`: YAML config loading
-- `Sources/Core/Models`: shared domain models + errors
+- `Package.swift`: SPM manifest (targets/products/dependencies)
+- `Sources/Core`: shared library (`TypoWriterCore`)
+  - `Sources/Core/AudioRecorder`: AVFoundation recorder
+  - `Sources/Core/SpeechRecognition`: ASR abstraction + implementations
+  - `Sources/Core/TextProcessor`: LLM text processing
+  - `Sources/Core/Config`: YAML config loading + env expansion
+  - `Sources/Core/Models`: domain models + `TWError`
+  - `Sources/Core/Debug`: `DebugLogger`
 - `Sources/TypoWriter`: CLI entrypoint
-- `Sources/TypoWriterApp`: macOS app
-- `Tests/CoreTests`: unit tests for Core
+- `Sources/TypoWriterApp`: macOS menubar app (AppKit)
+- `Tests/CoreTests`: unit tests
 
-## Code Style Summary
-- Prefer clarity over cleverness
-- Keep changes minimal and localized
-- Use `// MARK: - Section` headings to organize files
-- Follow Swift API Design Guidelines
+## Linting / Formatting Tooling
+- No SwiftLint / SwiftFormat configuration found.
+- Keep diffs minimal and match the surrounding style (don’t do drive-by reformatting).
+- Prefer compiler warnings/errors and unit tests as the primary “lint”.
 
-## Imports
-- Place `import` statements at the top of the file
-- Use one import per line
-- Order imports by standard library, then external
-- Avoid unused imports
+## Coding Style (Swift)
+- Prefer clarity over cleverness; keep functions small and predictable.
+- Keep changes localized (avoid large refactors unless requested).
+- Use `// MARK: - ...` to separate logical sections (this repo uses it heavily, including Chinese headings).
+- Follow Swift API Design Guidelines (labels, naming, readability at call sites).
 
-## Formatting
-- Indentation uses 4 spaces
-- Braces follow K&R style (same line)
-- Align wrapped arguments vertically
-- Blank line between logical sections
-- Keep line length reasonable; wrap long literals
+### Imports
+- Put `import` statements at the top of the file.
+- One import per line.
+- Order:
+  1) Apple frameworks (e.g. `Foundation`, `AppKit`, `AVFoundation`)
+  2) External packages (e.g. `Yams`, `ArgumentParser`)
+  3) `@testable import ...` only in tests
+- Avoid unused imports.
 
-## Types and Access Control
-- Use `struct` for value types, `class` for reference types
-- Mark public API explicitly with `public`
-- Keep internal helpers `private` or `fileprivate`
-- Prefer immutable `let` where possible
-- Optional properties use `?` with explicit defaults
+### Formatting
+- Indentation: 4 spaces.
+- Braces: K&R style (`if {` on same line).
+- Insert blank lines between logical blocks.
+- When wrapping arguments, align them vertically.
+- Keep line length reasonable; wrap long string literals when needed.
 
-## Naming Conventions
-- Types use `UpperCamelCase`
-- Methods and variables use `lowerCamelCase`
-- Boolean names read as predicates (`isEnabled`, `hasValue`)
-- Avoid single-letter names outside short loops
-- Use descriptive parameter labels
+### Types, Access Control, and API Surface
+- Use `struct` for value types; use `class` for shared mutable state/singletons (e.g. `DebugLogger`).
+- Mark library API explicitly (`public`) where needed; keep helpers `private` / `fileprivate`.
+- Prefer immutable `let` properties; only use `var` when mutation is required.
+- Provide explicit initializers for public models (common pattern in `Sources/Core/Models`).
 
-## Error Handling
-- Use `TWError` for user-facing errors
-- Prefer `guard` with early `throw` for validation
-- Wrap parsing errors with context when needed
-- Surface network failures via `TWError.networkError`
-- Provide localized descriptions in `TWError.errorDescription`
+### Naming Conventions
+- Types: `UpperCamelCase`.
+- Methods/vars: `lowerCamelCase`.
+- Boolean names read as predicates: `isEnabled`, `hasValue`, `shouldRetry`.
+- Avoid single-letter names except in short loops.
+- Use descriptive external parameter labels.
 
-## Concurrency
-- Async operations use `async/await`
-- Network calls use `URLSession.shared.data(for:)`
-- Keep async functions small and focused
-- Avoid blocking the main thread in app targets
+### Error Handling
+- Use `TWError` for user-facing/core domain errors (`Sources/Core/Models/Models.swift`).
+- Prefer `guard` + early `throw` for validation.
+- Wrap parsing/IO/network errors with context (keep the original `localizedDescription`).
+- For user-visible strings, rely on `TWError: LocalizedError` via `errorDescription`.
 
-## Networking
-- Validate URLs before use
-- Set required headers explicitly
-- Encode request bodies with `JSONEncoder`
-- Decode with `JSONDecoder` and proper key strategies
-- Check HTTP status codes and return friendly errors
+### Concurrency
+- Use `async/await` for asynchronous operations.
+- Keep async functions focused; avoid blocking the main thread (especially in `TypoWriterApp`).
 
-## Configuration
-- YAML config path: `~/.config/tw/config.yaml`
-- Environment expansion supports `${VAR_NAME}`
-- Validation happens in `ConfigLoader`
-- Provide example config via `createExampleConfig`
+### Networking
+- Use `URLSession.shared.data(for:)`.
+- Validate URLs and check HTTP status codes.
+- Set headers explicitly; do not log secrets.
+- Encode request bodies with `JSONEncoder`; decode with `JSONDecoder`.
 
-## Data Models
-- Define Codable models close to feature logic
-- Keep request/response models `private` within file
-- Use explicit `CodingKeys` for snake_case fields
-- Prefer optional fields for API responses
+### Configuration
+- Default YAML config path: `~/.config/tw/config.yaml`.
+- Config supports env expansion `${VAR_NAME}` (see `ConfigLoader`).
+- Keep generated/config files under `~/.config/tw` (don’t write outside the user home dir).
 
-## Resources and Paths
-- App target excludes `Info.plist` and entitlements from compilation
-- Prefer `FileManager` for user path lookups
-- Avoid writing outside the user home directory
-- Keep generated config under `~/.config/tw`
+### Logging / Debugging
+- Use `DebugLogger` for text-processing/selection debugging.
+- Never log API keys/tokens or other secrets.
 
 ## Testing Guidelines
-- Tests live under `Tests/CoreTests`
-- Test names use `test<Behavior>` style
-- Use `XCTAssert*` for expectations
-- Keep tests deterministic
-- Prefer unit tests over integration tests
+- Tests live under `Tests/CoreTests`.
+- Test names use `test<Behavior>`.
+- Prefer deterministic unit tests; avoid network calls.
+- Use `XCTAssert*` APIs for assertions.
 
-## Documentation and Comments
-- Public types should have short doc comments
-- Prefer concise inline comments when necessary
-- Avoid redundant comments for otwous logic
-- Keep Chinese comments if the surrounding file uses them
+## UI/App Notes (TypoWriterApp)
+- Stick to existing AppKit patterns and project structure.
+- Keep UI orchestration in helper classes (e.g. `MenuBarController`, `HotkeyManager`).
+- Keep business logic in `Core`; avoid pulling UI dependencies into `Sources/Core`.
 
-## Swift Package Manager Practices
-- Add new dependencies in `Package.swift`
-- Keep target dependencies explicit
-- Prefer internal targets over ad-hoc file references
-
-## UI/App Code
-- Use AppKit patterns consistent with existing files
-- Keep UI logic out of Core
-- Use helper classes (`MenuBarController`, `HotkeyManager`) for orchestration
-
-## Logging and Debugging
-- Use `DebugLogger` for text-processing logging
-- Do not log secrets (API keys, tokens)
-
-## Preferred Patterns
-- Initialize models with explicit initializer
-- Validate configs early
-- Use `enum` for provider choices
-- Keep API models `private` within file
-
-## Avoid
-- Do not add new linting tooling
-- Do not introduce formatting changes unrelated to task
-- Do not add inline comments unless requested
-- Do not add new files unless necessary
+## TODO
+- 配置项：支持更多模型提供厂商；将各厂商的模型配置封装为预定义模板，用户只需提供对应 `api_key` 即可。
+- 用户预定义词典：在配置文件中支持高频词列表；在语音识别与文本改写时注入词典/提示，提升效果。
+- 自定义语气改写：支持用户定义一种“改写方法/语气”并内置为 rewrite preset，供后续快速调用。
 
 ## When Unsure
-- Check similar implementations under `Sources/Core`
-- Follow existing formatting and `// MARK:` usage
-- Ask for clarification on public API changes
+- Look for similar patterns under `Sources/Core` and mirror them.
+- Prefer minimal, incremental changes over broad rewrites.
+- Ask before changing public API shapes or behavior.

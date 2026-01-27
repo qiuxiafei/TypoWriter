@@ -3,9 +3,9 @@ import Foundation
 /// OpenAI 兼容格式的文本处理器
 /// 支持任何兼容 OpenAI API 格式的服务（OpenAI、Claude、DeepSeek、Ollama 等）
 public class OpenAICompatibleProcessor: TextProcessing {
-    private let config: TextProcessingConfig
+    private let config: ResolvedTextProcessingConfig
 
-    public init(config: TextProcessingConfig) {
+    public init(config: ResolvedTextProcessingConfig) {
         self.config = config
     }
 
@@ -13,6 +13,7 @@ public class OpenAICompatibleProcessor: TextProcessing {
         guard !config.apiKey.isEmpty else {
             throw TWError.textProcessingFailed("API Key 未配置")
         }
+
 
         let prompt = Prompts.generateProcessingPrompt(
             rawText: rawText,
@@ -46,10 +47,7 @@ public class OpenAICompatibleProcessor: TextProcessing {
 
     private func callChatCompletion(prompt: String) async throws -> String {
         // 构建 URL
-        let baseUrl = config.baseUrl.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard let url = URL(string: "\(baseUrl)/chat/completions") else {
-            throw TWError.textProcessingFailed("无效的 API URL")
-        }
+        let url = config.endpoint
 
         // 构建请求
         var request = URLRequest(url: url)
@@ -62,8 +60,8 @@ public class OpenAICompatibleProcessor: TextProcessing {
             messages: [
                 ChatMessage(role: "user", content: prompt)
             ],
-            temperature: 0.3,
-            maxTokens: 4096
+            temperature: config.temperature,
+            maxTokens: config.maxTokens
         )
 
         request.httpBody = try JSONEncoder().encode(requestBody)
@@ -88,7 +86,7 @@ public class OpenAICompatibleProcessor: TextProcessing {
             throw TWError.invalidResponse("响应中没有内容")
         }
 
-        return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        return content.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
     }
 }
 
